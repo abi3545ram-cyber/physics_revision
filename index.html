@@ -1,0 +1,1723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relearning Physics — a working method</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#E7EAEC; --paper-2:#F4F5F6; --card:#FBFBFA;
+  --ink:#161B2E; --ink-soft:#4A5169; --ink-faint:#878DA0;
+  --line:#CDD2D8; --line-soft:#DDE1E5;
+  --accent:#DB8B1E; --accent-deep:#B26E12; --accent-wash:#F6E6CC;
+  /* semantic failure-type colours, muted to fit paper */
+  --t-recall:#3F6CA8; --t-trigger:#C7891B; --t-concept:#B23A3A;
+  --t-slip:#3E8E6A; --t-comp:#7A56A6;
+  --due:#B23A3A; --soon:#C7891B; --rest:#3E8E6A;
+  --shadow:0 1px 2px rgba(22,27,46,.06),0 6px 20px rgba(22,27,46,.06);
+  --r:14px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:'Inter',system-ui,sans-serif; font-size:16px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; letter-spacing:-.005em;
+  /* faint graph-paper grid */
+  background-image:
+    linear-gradient(rgba(22,27,46,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(22,27,46,.035) 1px,transparent 1px);
+  background-size:26px 26px;
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+h1,h2,h3,h4{font-family:'Space Grotesk',sans-serif;font-weight:600;letter-spacing:-.02em;line-height:1.12;color:var(--ink)}
+.mono{font-family:'IBM Plex Mono',monospace}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-deep);font-weight:500}
+a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+
+/* ---- shell ---- */
+.app{display:grid;grid-template-columns:262px 1fr;min-height:100vh;max-width:1320px;margin:0 auto}
+.side{position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid var(--line);
+  background:rgba(231,234,236,.86);backdrop-filter:blur(6px);padding:26px 18px 40px}
+.brand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.06rem;letter-spacing:-.02em;line-height:1.2;margin:0 8px 4px}
+.brand b{color:var(--accent-deep)}
+.brand-sub{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:0 8px 22px}
+.nav{display:flex;flex-direction:column;gap:1px}
+.nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;color:var(--ink-soft);
+  text-decoration:none;font-size:.9rem;font-weight:450;cursor:pointer;transition:background .15s,color .15s}
+.nav a .n{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--ink-faint);min-width:18px}
+.nav a:hover{background:rgba(219,139,30,.09);color:var(--ink)}
+.nav a.on{background:var(--ink);color:#fff}
+.nav a.on .n{color:var(--accent)}
+.nav .grp{font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin:18px 10px 6px}
+
+.main{padding:0;min-width:0}
+.wrap{max-width:820px;margin:0 auto;padding:46px 40px 120px}
+section{display:none;animation:fade .35s ease}
+section.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ---- type blocks ---- */
+.h-sec{font-size:2.15rem;margin:0 0 6px}
+.lead{font-size:1.08rem;color:var(--ink-soft);margin:0 0 30px;max-width:62ch}
+h3.blk{font-size:1.32rem;margin:40px 0 12px;padding-top:18px;border-top:1px solid var(--line-soft)}
+h4.sub{font-size:1.02rem;margin:24px 0 8px}
+p{margin:0 0 14px}
+.muted{color:var(--ink-soft)}
+ul.clean{margin:0 0 16px;padding-left:0;list-style:none}
+ul.clean li{position:relative;padding-left:22px;margin-bottom:9px}
+ul.clean li::before{content:"";position:absolute;left:4px;top:.66em;width:6px;height:6px;background:var(--accent);border-radius:2px;transform:rotate(45deg)}
+strong{font-weight:600}
+.kbd,.unit{font-family:'IBM Plex Mono',monospace;font-size:.86em;background:var(--paper-2);border:1px solid var(--line-soft);border-radius:5px;padding:1px 6px}
+
+/* ---- cards & callouts ---- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px 24px;margin:16px 0;box-shadow:var(--shadow)}
+.note{border-left:3px solid var(--accent);background:linear-gradient(90deg,var(--accent-wash),transparent 70%);
+  padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0}
+.note .eyebrow{margin-bottom:4px;display:block}
+.warn{border-left:3px solid var(--t-concept);background:linear-gradient(90deg,rgba(178,58,58,.08),transparent 70%);padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0}
+.eq{font-family:'IBM Plex Mono',monospace;background:var(--ink);color:#fff;border-radius:10px;padding:12px 16px;font-size:.92rem;margin:14px 0;overflow-x:auto;white-space:nowrap}
+.eq .c{color:var(--accent)}
+
+/* phase chips */
+.phases{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 6px}
+.chip{font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.04em;padding:5px 11px;border-radius:20px;border:1px solid var(--line);background:var(--paper-2);color:var(--ink-soft);cursor:default}
+
+/* hero signature: forgetting curve */
+.hero{background:var(--ink);border-radius:18px;padding:30px 30px 18px;color:#EDEFF4;margin:6px 0 26px;position:relative;overflow:hidden}
+.hero h1{color:#fff;font-size:1.6rem;margin:0 0 6px;max-width:24ch}
+.hero p{color:#AEB6C9;margin:0 0 8px;font-size:.96rem;max-width:50ch}
+.hero svg{width:100%;height:auto;display:block;margin-top:6px}
+
+/* generic grid of items */
+.grid{display:grid;gap:14px}
+.grid.two{grid-template-columns:1fr 1fr}
+@media(max-width:680px){.grid.two{grid-template-columns:1fr}}
+
+/* accordion */
+.acc{border:1px solid var(--line);border-radius:12px;margin:10px 0;background:var(--card);overflow:hidden}
+.acc>button{width:100%;text-align:left;border:0;background:none;padding:15px 18px;font:inherit;font-weight:500;
+  color:var(--ink);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.acc>button:hover{background:var(--paper-2)}
+.acc>button .tag{font-family:'IBM Plex Mono',monospace;font-size:.66rem;padding:2px 8px;border-radius:20px;color:#fff;letter-spacing:.03em;white-space:nowrap}
+.acc .body{padding:0 18px;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease}
+.acc.open .body{padding:2px 18px 18px;max-height:1400px}
+.acc .arrow{transition:transform .25s;color:var(--ink-faint)}
+.acc.open .arrow{transform:rotate(90deg)}
+
+/* buttons & inputs */
+button.btn{font:inherit;font-weight:500;font-size:.9rem;border:1px solid var(--ink);background:var(--ink);color:#fff;
+  padding:9px 16px;border-radius:9px;cursor:pointer;transition:transform .1s,opacity .15s}
+button.btn:hover{transform:translateY(-1px)}
+button.btn.ghost{background:none;color:var(--ink)}
+button.btn.sm{padding:6px 12px;font-size:.82rem}
+button.btn.amber{background:var(--accent);border-color:var(--accent);color:#1c1300}
+input,select,textarea{font:inherit;font-size:.9rem;width:100%;padding:9px 12px;border:1px solid var(--line);
+  border-radius:9px;background:var(--paper-2);color:var(--ink);margin-bottom:10px}
+textarea{min-height:64px;resize:vertical;line-height:1.5}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+label.fld{font-size:.78rem;font-weight:500;color:var(--ink-soft);display:block;margin-bottom:3px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:560px){.row{grid-template-columns:1fr}}
+
+/* tags for log */
+.tg{font-family:'IBM Plex Mono',monospace;font-size:.66rem;padding:2px 8px;border-radius:20px;color:#fff;letter-spacing:.02em}
+.empty{color:var(--ink-faint);font-style:italic;font-size:.9rem;padding:10px 0}
+
+/* SR due pills */
+.srrow{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;margin:8px 0;background:var(--card);flex-wrap:wrap}
+.srrow .dot{width:9px;height:9px;border-radius:50%;flex:none}
+.srrow .cn{font-weight:500;flex:1;min-width:140px}
+.srrow .meta{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--ink-faint)}
+
+/* mobile nav */
+.menubtn{display:none}
+@media(max-width:860px){
+  .app{grid-template-columns:1fr}
+  .side{position:fixed;z-index:40;width:262px;left:-280px;transition:left .25s;box-shadow:var(--shadow)}
+  .side.show{left:0}
+  .menubtn{display:flex;position:fixed;z-index:50;top:14px;left:14px;align-items:center;gap:8px;
+    background:var(--ink);color:#fff;border:0;border-radius:10px;padding:9px 13px;font:inherit;font-size:.85rem;cursor:pointer;box-shadow:var(--shadow)}
+  .wrap{padding:64px 22px 100px}
+  .h-sec{font-size:1.8rem}
+  .scrim{display:none;position:fixed;inset:0;background:rgba(22,27,46,.4);z-index:30}
+  .scrim.show{display:block}
+}
+.fnref{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--accent-deep)}
+.divider{height:1px;background:var(--line-soft);margin:22px 0}
+.t4{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.stat .big{font-family:'Space Grotesk';font-size:1.5rem;font-weight:600}
+.stat .lbl{font-family:'IBM Plex Mono';font-size:.66rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-faint)}
+.loopline{counter-reset:lp;margin:18px 0}
+.loopstep{display:flex;gap:16px;padding:14px 0;border-top:1px solid var(--line-soft)}
+.loopstep:first-child{border-top:0}
+.loopstep .num{counter-increment:lp;font-family:'Space Grotesk';font-weight:700;font-size:1.1rem;color:var(--accent-deep);
+  min-width:30px}
+.loopstep .num::before{content:counter(lp,decimal-leading-zero)}
+.loopstep h4{margin:0 0 4px;font-size:1rem}
+.loopstep p{margin:0;font-size:.92rem;color:var(--ink-soft)}
+/* ===== v2 component styles ===== */
+.help{border:1px solid var(--line);border-radius:12px;margin:0 0 24px;background:var(--card);overflow:hidden}
+.help-h{width:100%;border:0;background:none;font:inherit;font-size:.86rem;font-weight:500;color:var(--ink-soft);
+  padding:11px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.help-h:hover{background:var(--paper-2)}
+.help-i{display:inline-flex;width:18px;height:18px;border-radius:50%;background:var(--accent);color:#1c1300;
+  align-items:center;justify-content:center;font-weight:700;font-size:.72rem;margin-right:8px}
+.help-h .arrow{transition:transform .25s;color:var(--ink-faint)}
+.help.open .help-h .arrow{transform:rotate(90deg)}
+.help-b{max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease;padding:0 16px}
+.help.open .help-b{max-height:400px;padding:2px 16px 16px}
+.howlist{margin:0;padding-left:20px;font-size:.9rem;color:var(--ink-soft)}
+.howlist li{margin:4px 0}
+
+.action-card{background:var(--ink);border-radius:16px;padding:24px 26px;color:#fff;box-shadow:var(--shadow)}
+
+.bar{height:9px;background:var(--paper);border-radius:6px;overflow:hidden;border:1px solid var(--line-soft)}
+.bar-fill{height:100%;border-radius:6px;transition:width .5s ease}
+
+.ladder-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line-soft)}
+.ladder-row:first-child{border-top:0}
+.ladder-n{width:26px;height:26px;border-radius:50%;background:var(--paper-2);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk';font-weight:600;font-size:.85rem;flex:none}
+
+/* quiz / trigger options */
+.scenario{font-family:'Space Grotesk';font-size:1.18rem;font-weight:500;line-height:1.35;padding:14px 16px;
+  background:var(--paper-2);border-left:3px solid var(--accent);border-radius:0 10px 10px 0}
+.opts{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.opt{text-align:left;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:.92rem;
+  padding:11px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:border-color .15s,background .15s}
+.opt:hover:not(:disabled){border-color:var(--accent);background:var(--paper-2)}
+.opt:disabled{cursor:default}
+.opt.sel{border-color:var(--ink);background:var(--paper-2)}
+.opt.good{border-color:var(--t-slip);background:rgba(62,142,106,.1)}
+.opt.bad{border-color:var(--t-concept);background:rgba(178,58,58,.09)}
+.opt-box{width:18px;height:18px;border:1.5px solid var(--line);border-radius:5px;display:inline-flex;align-items:center;
+  justify-content:center;font-size:.7rem;color:var(--accent-deep);flex:none}
+.opt.sel .opt-box{border-color:var(--ink)}
+
+/* explorer */
+.segwrap{display:flex;flex-wrap:wrap;gap:6px}
+.seg{font:inherit;font-size:.8rem;border:1px solid var(--line);background:var(--paper-2);color:var(--ink-soft);
+  padding:6px 11px;border-radius:8px;cursor:pointer}
+.seg:hover{border-color:var(--accent)}
+.seg.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.predict{background:var(--paper-2);border:1px dashed var(--accent);border-radius:12px;padding:16px}
+.sld{margin:12px 0}
+.sld input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:5px;
+  background:var(--line);outline:none;margin:6px 0;padding:0}
+.sld input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;
+  background:var(--accent);border:2px solid #fff;box-shadow:var(--shadow);cursor:pointer}
+.sld input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--accent);border:2px solid #fff;cursor:pointer}
+.readout{display:flex;align-items:baseline;gap:8px;margin-top:16px;padding:14px 16px;background:var(--ink);border-radius:10px;color:#fff;flex-wrap:wrap}
+.readout .mono{color:#AEB6C9}
+.big-res{font-family:'Space Grotesk';font-size:1.8rem;font-weight:600;color:var(--accent)}
+
+/* scheduler grade buttons */
+.grades{display:flex;gap:5px;flex-wrap:wrap}
+.gbtn{font:inherit;font-size:.76rem;font-weight:500;border:1px solid var(--line);background:var(--card);
+  padding:5px 10px;border-radius:7px;cursor:pointer;transition:transform .1s}
+.gbtn:hover{transform:translateY(-1px)}
+.gbtn.again{border-color:var(--t-concept);color:var(--t-concept)}
+.gbtn.hard{border-color:var(--t-trigger);color:var(--accent-deep)}
+.gbtn.good{border-color:var(--t-slip);color:var(--t-slip)}
+.gbtn.easy{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* sandbox */
+.sbctl{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:14px}
+@media(max-width:560px){.sbctl{grid-template-columns:1fr}}
+
+/* concept map */
+.cnode{cursor:pointer}
+.cnode rect{transition:stroke .15s,fill .15s}
+.cnode:hover rect{stroke:var(--accent);stroke-width:2.5}
+.cnode:focus{outline:none}
+.cnode:focus rect{stroke:var(--accent);stroke-width:3}
+
+</style>
+</head>
+<body>
+<button class="menubtn" onclick="toggleNav()">☰ Method</button>
+<div class="scrim" id="scrim" onclick="toggleNav()"></div>
+<div class="app">
+<aside class="side" id="side">
+  <div class="brand">Relearning <b>Physics</b></div>
+  <div class="brand-sub">a working method · not a textbook</div>
+  <nav class="nav" id="nav"></nav>
+</aside>
+<main class="main"><div class="wrap" id="content"></div></main>
+</div>
+<script>
+/* ============ persistence (safe: falls back to memory if storage blocked) ============ */
+const mem={};
+const store={
+  get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return mem[k]!=null?mem[k]:d}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){mem[k]=v}}
+};
+const uid=()=>Math.random().toString(36).slice(2,9);
+const todayISO=()=>new Date().toISOString().slice(0,10);
+const daysBetween=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
+const fmtDate=s=>{if(!s)return'';const d=new Date(s);return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})};
+
+/* ============ nav structure ============ */
+const NAV=[
+  {grp:'Start here'},
+  {id:'dashboard', n:'★', t:'Dashboard'},
+  {grp:'The method'},
+  {id:'overview', n:'00', t:'Why this works'},
+  {id:'loop',     n:'01', t:'The weekly loop'},
+  {grp:'The five phases'},
+  {id:'diagnose', n:'02', t:'Diagnose'},
+  {id:'repair',   n:'03', t:'Repair'},
+  {id:'test',     n:'04', t:'Test'},
+  {id:'apply',    n:'05', t:'Apply'},
+  {id:'retain',   n:'06', t:'Retain'},
+  {grp:'Active practice'},
+  {id:'trigger',        n:'A', t:'Trigger trainer'},
+  {id:'miscquiz',       n:'B', t:'Misconception check'},
+  {id:'explorer',       n:'C', t:'Equation explorer'},
+  {id:'counterfactual', n:'D', t:'Counterfactuals'},
+  {id:'sandbox',        n:'E', t:'Physics sandbox'},
+  {grp:'Working tools'},
+  {id:'errorlog', n:'07', t:'Error log'},
+  {id:'scheduler',n:'08', t:'Review scheduler'},
+  {id:'transfer', n:'09', t:'Transfer notebook'},
+  {id:'lens',     n:'10', t:'Daily lens'},
+  {grp:'Reference'},
+  {id:'misconceptions', n:'11', t:'Misconception fixes'},
+  {id:'analogies',      n:'12', t:'Analogy bank'},
+  {id:'conceptmap',     n:'13', t:'Concept map'},
+  {id:'sims',           n:'14', t:'Code-it challenges'},
+  {grp:'Next'},
+  {id:'alevel',    n:'15', t:'A-level bridge'},
+  {id:'resources', n:'16', t:'Resources'},
+];
+/* ---- hero signature: spaced-review retention curve, computed ---- */
+function heroSVG(){
+  const x0=58,x1=672,y0=28,y1=170,W=x1-x0,H=y1-y0;
+  const Y=p=>y1-(p/100)*H;               // p% retention -> y
+  const reviews=[0,.22,.46,.72];          // fractional x of each review
+  const taus=[.10,.16,.24,.40];           // decay slows after each review
+  const seg=160;                          // samples
+  // spaced curve (resets to 100 at each review, slower decay each time)
+  let spaced='';
+  for(let i=0;i<reviews.length;i++){
+    const start=reviews[i], end=(i<reviews.length-1?reviews[i+1]:1.02);
+    const tau=taus[i];
+    for(let s=0;s<=seg;s++){
+      const f=start+(end-start)*(s/seg); if(f>1.02)break;
+      const t=(f-start);
+      const p=100*Math.exp(-t/tau);
+      const X=x0+W*f, Yy=Y(p);
+      spaced+=(spaced===''?'M':'L')+X.toFixed(1)+' '+Yy.toFixed(1)+' ';
+    }
+  }
+  // single-pass forgetting (no review) faint dashed
+  let forget='';
+  for(let s=0;s<=seg;s++){const f=s/seg;const p=100*Math.exp(-f/.13);
+    forget+=(s===0?'M':'L')+(x0+W*f).toFixed(1)+' '+Y(p).toFixed(1)+' ';}
+  // review markers
+  let marks='';
+  reviews.slice(1).forEach(f=>{const X=x0+W*f;
+    marks+=`<line x1="${X}" y1="${Y(100)}" x2="${X}" y2="${y1}" stroke="#DB8B1E" stroke-width="1" stroke-dasharray="2 3" opacity=".5"/>`+
+           `<circle cx="${X}" cy="${Y(100)}" r="4" fill="#DB8B1E"/>`;});
+  return `<svg viewBox="0 0 700 200" role="img" aria-label="A forgetting curve that resets and flattens each time you review.">
+    <line x1="${x0}" y1="${y1}" x2="${x1}" y2="${y1}" stroke="#414A63" stroke-width="1"/>
+    <line x1="${x0}" y1="${y0}" x2="${x0}" y2="${y1}" stroke="#414A63" stroke-width="1"/>
+    <text x="${x0-8}" y="${Y(100)+4}" fill="#7E879C" font-size="10" text-anchor="end" font-family="IBM Plex Mono">100%</text>
+    <text x="${x0-8}" y="${y1+2}" fill="#7E879C" font-size="10" text-anchor="end" font-family="IBM Plex Mono">0</text>
+    <text x="${x1}" y="${y1+16}" fill="#7E879C" font-size="10" text-anchor="end" font-family="IBM Plex Mono">time →</text>
+    <path d="${forget}" fill="none" stroke="#5A647E" stroke-width="1.4" stroke-dasharray="4 4" opacity=".8"/>
+    ${marks}
+    <path d="${spaced}" fill="none" stroke="#DB8B1E" stroke-width="2.6" stroke-linejoin="round"/>
+    <text x="${x0+W*.5}" y="${Y(20)+2}" fill="#7E879C" font-size="10.5" font-family="Inter">forgetting without review</text>
+  </svg>`;
+}
+
+/* ============ section content ============ */
+const SEC={};
+
+SEC.overview=()=>`
+<div class="hero">
+  <div class="eyebrow" style="color:#DB8B1E">The whole idea on one screen</div>
+  <h1>Each review you do bends the forgetting curve flatter.</h1>
+  <p>The dashed line is what happens to a fact you learn once and leave alone. The amber line is the same fact reviewed at widening intervals — it keeps resetting to full, and decays more slowly every time. This app is built to make that amber line happen on purpose.</p>
+  ${heroSVG()}
+</div>
+
+<div class="eyebrow">Read this first</div>
+<h2 class="h-sec">Why this method, not just "do papers"</h2>
+<p class="lead">Doing past papers tells you your <em>score</em>. It does not, by itself, tell you <em>why</em> you missed marks, fix your mental model, or make the knowledge stick past next week. Those are three separate jobs, and each needs a different tool. That is what the five phases are for.</p>
+
+<div class="card">
+<p style="margin:0"><strong>The core claim from learning science:</strong> understanding and retention are <em>built by retrieval and varied application</em>, not by exposure. Re-reading notes and watching explanations feel productive and barely move the needle. Pulling an idea out of an empty head, explaining it aloud, and using it in a situation the textbook never mentioned — that is what actually wires it in. Every tool here is a way to force one of those three actions.</p>
+</div>
+
+<h3 class="blk">The trap specific to GCSE physics</h3>
+<p>GCSE is conceptually shallow enough that <strong>you can get answers right while holding a broken mental model.</strong> People pass believing heavier objects fall faster, that current gets "used up" round a circuit, that a moving object must have a force pushing it. The exam doesn't catch these — but A-level is built directly on top of them, so it detonates there instead.</p>
+<div class="note"><span class="eyebrow">Your real GCSE target</span>Not the mark. The mark is a proxy. The target is making sure the <strong>foundational intuitions are correct</strong>, because everything in A-level is stacked on them. When you get something right, occasionally poke it: <em>would I still get this if they flipped the scenario or changed the numbers?</em></p>
+
+<h3 class="blk">The three things every phase is trying to produce</h3>
+<div class="t4">
+  <div class="stat"><div class="big">Retention</div><div class="lbl">it's still there in a month</div></div>
+  <div class="stat"><div class="big">Understanding</div><div class="lbl">you hold a correct mechanism</div></div>
+  <div class="stat"><div class="big">Transfer</div><div class="lbl">it works on novel scenarios</div></div>
+</div>
+<p class="muted">Most self-learners get the first by accident, neglect the second, and skip the third entirely. The third is the whole reason you said "not just exam questions." It is the part this app pushes hardest.</p>
+`;
+
+SEC.loop=()=>`
+<div class="eyebrow">The engine</div>
+<h2 class="h-sec">The weekly loop</h2>
+<p class="lead">Five phases, run in order, every cycle. A "cycle" can be one topic or one paper section — scale it to the time you have. The point is that you never skip a phase, because each one does a job the others can't.</p>
+
+<div class="phases">
+  <span class="chip" style="border-color:var(--t-recall);color:var(--t-recall)">◆ diagnose</span>
+  <span class="chip" style="border-color:var(--t-concept);color:var(--t-concept)">◆ repair</span>
+  <span class="chip" style="border-color:var(--accent-deep);color:var(--accent-deep)">◆ test</span>
+  <span class="chip" style="border-color:var(--t-slip);color:var(--t-slip)">◆ apply</span>
+  <span class="chip" style="border-color:var(--t-comp);color:var(--t-comp)">◆ retain</span>
+</div>
+
+<div class="loopline card">
+  <div class="loopstep"><div class="num"></div><div><h4>Diagnose — find the gap and its <em>type</em></h4><p>Do a paper section or a recall test. For everything wrong or shaky, log <em>what kind</em> of failure it was. Don't just record the score.</p></div></div>
+  <div class="loopstep"><div class="num"></div><div><h4>Repair — rebuild the model, not just the fact</h4><p>For each gap, relearn the <em>mechanism</em> and <em>why the equation has the shape it does</em> — not the bare formula. Kill any misconception at the root.</p></div></div>
+  <div class="loopstep"><div class="num"></div><div><h4>Test — prove it from an empty head</h4><p>Active recall + the Feynman pass: explain it aloud in plain words. The exact moment you go vague is the part you don't actually have.</p></div></div>
+  <div class="loopstep"><div class="num"></div><div><h4>Apply — push it somewhere new</h4><p>Solve <em>varied, interleaved</em> problems, then invent 2–3 real-world scenarios the textbook never mentioned. Or simulate one in code.</p></div></div>
+  <div class="loopstep"><div class="num"></div><div><h4>Retain — schedule the comeback</h4><p>Drop the equation into a flashcard deck, and diary the <em>problem</em> for a spaced re-attempt. A concept you can't re-solve cold next month hasn't stuck.</p></div></div>
+</div>
+
+<div class="note"><span class="eyebrow">Use your CS background as leverage</span>You already have the algebra, the graph-reading, and the ability to <strong>code a simulation</strong>. Move fast through the maths-mechanical bits of GCSE and spend the saved time on mechanisms and on the <a onclick="go('sims')">code-it challenges</a> — writing a simulation forces you to state a physical model with zero hand-waving, which is the deepest comprehension check there is.</p>
+
+<h3 class="blk">A realistic single cycle, start to finish</h3>
+<p>So the abstraction isn't floating, here's one full pass on a single topic so you can see every phase touch the same idea.</p>
+<div class="acc-host" data-acc="loopworked"></div>
+`;
+SEC.diagnose=()=>`
+<div class="eyebrow">Phase 02 · ◆ diagnose</div>
+<h2 class="h-sec">Diagnose the <em>type</em> of failure</h2>
+<p class="lead">A wrong answer is not one thing. "Got it wrong" lumps together five completely different problems that each need a different fix. Marking a paper without sorting your mistakes by type wastes most of the diagnostic value.</p>
+
+<h3 class="blk">The five failure types</h3>
+<p>Every mistake — and every <em>right</em> answer you felt shaky about — falls into one of these. Learn to name them instantly; it becomes second nature after one paper.</p>
+
+<div class="grid two">
+  <div class="card" style="border-left:3px solid var(--t-recall)">
+    <span class="tg" style="background:var(--t-recall)">RECALL GAP</span>
+    <p style="margin:10px 0 0"><strong>You didn't know the fact or equation.</strong></p>
+    <p class="muted" style="font-size:.9rem;margin:6px 0 0"><em>e.g.</em> Couldn't remember that gravitational PE = <span class="mono">m g h</span>.<br><strong>Fix →</strong> flashcard it, schedule spaced review. Cheap to fix.</p>
+  </div>
+  <div class="card" style="border-left:3px solid var(--t-trigger)">
+    <span class="tg" style="background:var(--t-trigger)">TRIGGER GAP</span>
+    <p style="margin:10px 0 0"><strong>You knew the tool but didn't see it was the moment to use it.</strong></p>
+    <p class="muted" style="font-size:.9rem;margin:6px 0 0"><em>e.g.</em> A ball falls from a roof; you knew KE and GPE equations but didn't recognise this as an <em>energy-conservation</em> problem.<br><strong>Fix →</strong> more <em>varied</em> problems, interleaved.</p>
+  </div>
+  <div class="card" style="border-left:3px solid var(--t-concept)">
+    <span class="tg" style="background:var(--t-concept)">CONCEPTUAL ERROR</span>
+    <p style="margin:10px 0 0"><strong>Your mental model is actually wrong.</strong> The dangerous one.</p>
+    <p class="muted" style="font-size:.9rem;margin:6px 0 0"><em>e.g.</em> You believe the heavier ball lands first.<br><strong>Fix →</strong> stop. Rebuild the model in <a onclick="go('repair')">Repair</a>. Don't paper over it.</p>
+  </div>
+  <div class="card" style="border-left:3px solid var(--t-slip)">
+    <span class="tg" style="background:var(--t-slip)">SLIP</span>
+    <p style="margin:10px 0 0"><strong>You knew everything but botched the execution.</strong></p>
+    <p class="muted" style="font-size:.9rem;margin:6px 0 0"><em>e.g.</em> Used grams where the formula wants kg — answer off by 1000. Rearranged wrong.<br><strong>Fix →</strong> a checklist habit (units first), not more theory.</p>
+  </div>
+  <div class="card" style="border-left:3px solid var(--t-comp)">
+    <span class="tg" style="background:var(--t-comp)">COMPREHENSION</span>
+    <p style="margin:10px 0 0"><strong>You couldn't decode what the question was asking.</strong></p>
+    <p class="muted" style="font-size:.9rem;margin:6px 0 0"><em>e.g.</em> Didn't know what "terminal velocity" or "in terms of" was after.<br><strong>Fix →</strong> learn the exam's vocabulary and command words.</p>
+  </div>
+  <div class="card" style="background:var(--ink);color:#EDEFF4;border:0">
+    <span class="eyebrow" style="color:var(--accent)">The point</span>
+    <p style="margin:10px 0 0;color:#EDEFF4">A trigger gap and a conceptual error look identical on the mark scheme — both are "0 marks". But one means <em>do more problems</em> and the other means <em>your physics is broken</em>. Only the sort tells them apart.</p>
+  </div>
+</div>
+
+<h3 class="blk">Run the diagnostic well</h3>
+<ul class="clean">
+  <li><strong>Mark honestly, then re-mark for confidence.</strong> Go back over the questions you got <em>right</em> and flag any you'd have missed with different numbers. Shaky-right is a real gap; treat it like a wrong one.</li>
+  <li><strong>Log every gap by type</strong> in the <a onclick="go('errorlog')">Error log</a>. Over a few papers, clusters appear — and GCSE has only a handful of core models (energy, forces, waves, electricity, particle model, radioactivity, magnetism), so your gaps will concentrate fast.</li>
+  <li><strong>Don't fix anything yet.</strong> Diagnose the whole section first. Fixing mid-paper biases you toward whack-a-mole instead of seeing the pattern.</li>
+</ul>
+
+<div class="note"><span class="eyebrow">The "shaky-right" probe</span>For any answer you're not sure about, ask the three flip questions: <em>change the numbers · flip the scenario · explain the mechanism.</em> If any of those would trip you, it's a gap. Log it.</p>
+
+<h3 class="blk">Log a gap now</h3>
+<p class="muted" style="margin-top:-4px">Mini error log — full version with filtering lives in <a onclick="go('errorlog')">Error log</a>.</p>
+<div class="acc-host" data-tool="errorlog-mini"></div>
+`;
+
+SEC.repair=()=>`
+<div class="eyebrow">Phase 03 · ◆ repair</div>
+<h2 class="h-sec">Repair the model, not the symptom</h2>
+<p class="lead">This is where understanding is actually built. The rule: never relearn a bare fact. Relearn the <strong>mechanism</strong> behind it and <strong>why the equation has the shape it does</strong>. A formula you can reconstruct is one you also know when <em>not</em> to use.</p>
+
+<h3 class="blk">Four habits that force genuine understanding</h3>
+
+<h4 class="sub">1 · Derive or justify, don't memorise</h4>
+<p>At GCSE you can't fully derive <span class="mono">KE = ½mv²</span>, but you can own the <em>shape</em>: double the speed and the energy <em>quadruples</em>, because v is squared. Knowing that means you can sanity-check answers and you know the relationship even when you forget the constant.</p>
+<div class="eq">E<sub>k</sub> = <span class="c">½</span> m v<span class="c">²</span>   →   v ×2  ⇒  E<sub>k</sub> ×4</div>
+
+<h4 class="sub">2 · Predict before you calculate</h4>
+<p>Before plugging numbers in, say out loud what <em>should</em> happen qualitatively. <em>"I'm adding resistance in series, so current should drop, so the bulb should dim."</em> Then run the maths and check it agrees with your prediction. The mismatches are where the real learning is — a number that disagrees with your story means either the arithmetic or the model is wrong, and you need to know which.</p>
+
+<h4 class="sub">3 · Always carry a causal story</h4>
+<p>Physics is mechanisms, not formulas. "Why does the bulb dim when I add a second bulb in series?" should have a <em>story</em> — more resistance → less current everywhere → less power dissipated in each bulb — not just an equation. If your only answer is an equation, you've memorised, not understood.</p>
+
+<h4 class="sub">4 · Kill misconceptions at the root</h4>
+<p>If Diagnose flagged a <span class="tg" style="background:var(--t-concept)">CONCEPTUAL ERROR</span>, the fix is not "remember the right answer" — it's replacing the broken model with a correct one, usually via an analogy concrete enough that the wrong model stops feeling true. The <a onclick="go('misconceptions')">Misconception fixes</a> bank pairs the classic GCSE wrong-models with the correct mechanism and the analogy that dislodges it.</p>
+
+<div class="warn"><span class="eyebrow" style="color:var(--t-concept)">Watch for self-rescue</span>When you catch yourself thinking "well, what I <em>meant</em> was…" after seeing the answer — stop. That's your broken model quietly editing the memory so it still feels right. Write down what you <em>actually</em> thought before the answer appeared, and repair <em>that</em>.</p>
+
+<h3 class="blk">The repair worktable</h3>
+<p>A four-line frame to run on any gap. Fill it in your notes (or head) for each repair — it forces the mechanism out into the open.</p>
+<div class="card">
+<table style="width:100%;border-collapse:collapse;font-size:.92rem">
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:9px 8px;width:34%;font-weight:600">What I believed</td><td style="padding:9px 8px;color:var(--ink-soft)">the model I actually used, before the answer</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:9px 8px;font-weight:600">What's true</td><td style="padding:9px 8px;color:var(--ink-soft)">the correct mechanism, in one sentence</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:9px 8px;font-weight:600">Why the equation looks like that</td><td style="padding:9px 8px;color:var(--ink-soft)">what each symbol does; why squared / inverse / etc.</td></tr>
+<tr><td style="padding:9px 8px;font-weight:600">The tell</td><td style="padding:9px 8px;color:var(--ink-soft)">how I'll recognise this situation next time</td></tr>
+</table>
+</div>
+`;
+SEC.test=()=>`
+<div class="eyebrow">Phase 04 · ◆ test</div>
+<h2 class="h-sec">Test it from an empty head</h2>
+<p class="lead">Re-reading and re-watching feel like learning and mostly aren't — they let you confuse <em>recognising</em> an idea with being able to <em>produce</em> it. The only honest test is retrieval: close everything and rebuild the idea from nothing.</p>
+
+<h3 class="blk">Active recall — the non-negotiable</h3>
+<ul class="clean">
+  <li><strong>Blank-page it.</strong> Shut the notes. Write the concept, the equation, the derivation-sketch, and the causal story from memory. Then check. The gap between what you produced and what's correct is your precise remaining weakness — far sharper than any score.</li>
+  <li><strong>Re-solve, don't re-read, old problems.</strong> A worked example you can follow is not one you can do. Cover the solution and redo it cold.</li>
+  <li><strong>Recall is uncomfortable; that discomfort is the mechanism.</strong> Easy review = weak encoding. If it felt effortless you probably recognised rather than retrieved.</li>
+</ul>
+
+<h3 class="blk">The Feynman pass</h3>
+<p>Explain the concept out loud, in plain words, as if to someone with no physics — no jargon allowed. <strong>The exact point where you go vague or reach for a technical word to paper over a gap is your real weak spot.</strong> It's brutal and it's the fastest gap-finder there is.</p>
+<div class="card">
+<div class="eyebrow">Feynman prompts — pick one and talk for 60 seconds, no notes</div>
+<div id="feynPrompt" style="font-size:1.12rem;font-family:'Space Grotesk';font-weight:500;margin:12px 0;min-height:2.4em">Why does a heavier object <em>not</em> fall faster than a light one in a vacuum?</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+  <button class="btn sm" onclick="nextFeyn()">Another prompt</button>
+  <button class="btn sm ghost" onclick="go('scheduler')">I was vague — schedule a review</button>
+</div>
+<p class="muted" style="font-size:.85rem;margin:12px 0 0">If you stalled, that concept goes straight into Repair, then the scheduler. A stall is a successful diagnosis, not a failure.</p>
+</div>
+
+<div class="note"><span class="eyebrow">Teach-back beats highlighter every time</span>If you can explain it to a rubber duck without jargon, you own it. If you can't, you've found exactly what to repair — which is the point.</p>
+`;
+
+SEC.apply=()=>`
+<div class="eyebrow">Phase 05 · ◆ apply</div>
+<h2 class="h-sec">Apply it somewhere the textbook didn't</h2>
+<p class="lead">This is the phase most self-learners skip, and it's the one you specifically asked for: making concepts work on <em>any</em> scenario, not just exam questions. Transfer doesn't happen automatically — you have to deliberately drag each idea into new territory.</p>
+
+<h3 class="blk">Two moves that build transfer</h3>
+
+<h4 class="sub">1 · Interleave your practice</h4>
+<p>Don't do 20 energy problems in a row. Mixing topics together is harder and feels worse — and that's exactly why it works. Blocked practice lets you autopilot ("we're on the energy chapter, so use energy equations"). Interleaving forces you to first <em>decide which model applies</em>, which is the trigger-recognition skill that real problems demand. The difficulty is the feature.</p>
+
+<h4 class="sub">2 · Invent your own scenarios</h4>
+<p>After learning a concept, apply it to <strong>three real situations the textbook never mentioned.</strong> Generate them yourself — that generation is where transfer is forged. Examples to aim at:</p>
+<ul class="clean">
+  <li>Why does a heavy door swing slower than a light one given the same push? <span class="muted">(moments · rotational inertia)</span></li>
+  <li>Why does a shopping trolley get easier to push <em>after</em> it's already moving? <span class="muted">(static vs kinetic friction · Newton 1)</span></li>
+  <li>Why does a phone charger feel warm? <span class="muted">(resistive heating · P = I²R · efficiency)</span></li>
+  <li>Why do coastal towns have milder winters than inland ones? <span class="muted">(specific heat capacity of water)</span></li>
+</ul>
+
+<div class="note"><span class="eyebrow">Pull a prompt, then capture your answer</span>The <a onclick="go('transfer')">Transfer notebook</a> hands you a real-world scenario for whatever topic you pick and saves your explanation, so you build a personal bank of "I can apply this here" evidence. Get one now:</p>
+<div class="acc-host" data-tool="transfer-mini"></div>
+
+<h3 class="blk">Your unfair advantage: simulate it</h3>
+<p>Writing a simulation forces you to state the physical model with <em>zero</em> ambiguity — you cannot hand-wave to a compiler. It's simultaneously the deepest comprehension check and the best intuition-builder available to you, and it directly serves "apply to all scenarios". You've already built a Monte Carlo engine before; a radioactive-decay simulation is literally the same technique pointed at physics. See the <a onclick="go('sims')">Code-it challenges</a>.</p>
+`;
+
+SEC.retain=()=>`
+<div class="eyebrow">Phase 06 · ◆ retain</div>
+<h2 class="h-sec">Schedule the comeback</h2>
+<p class="lead">A concept learned today and never revisited is, in a month, mostly gone — that's the dashed line on the front page. Retention is a <em>scheduling</em> problem, and it's solved by two cheap, evidence-backed habits.</p>
+
+<h3 class="blk">1 · Spaced repetition</h3>
+<p>Review at widening intervals — roughly <span class="mono">1 → 3 → 7 → 16 → 35 → 75</span> days — each successful recall pushing the next review further out. Two layers:</p>
+<ul class="clean">
+  <li><strong>Facts & equations → flashcards.</strong> Anki or any deck. Definitions, constants, the equations and what each symbol means.</li>
+  <li><strong>Problems & concepts → re-attempts.</strong> Flashcards can't test whether you can still <em>solve</em>. Diary the actual problem and re-do it cold at the spaced interval. The <a onclick="go('scheduler')">Review scheduler</a> here is built for exactly this — concept-level, not card-level.</li>
+</ul>
+
+<h3 class="blk">2 · Interleave the reviews too</h3>
+<p>When reviews come due, don't batch them by topic. A mixed review queue rebuilds the trigger-recognition you built in Apply. The scheduler surfaces whatever's due regardless of topic, which keeps it naturally mixed.</p>
+
+<div class="note"><span class="eyebrow">The honesty rule</span>Mark a review "solid" only if you produced it <em>cold</em> — no notes, no peeking. Recognising the answer when you see it is not recall, and grading yourself generously just moves the forgetting back onto the dashed line.</p>
+
+<h3 class="blk">What's due right now</h3>
+<div class="acc-host" data-tool="scheduler-mini"></div>
+`;
+/* ============ DATA: misconception fixes ============ */
+const MIS=[
+ {t:'Heavier objects fall faster',topic:'Forces',
+  wrong:'A heavier ball, dropped with a light one, hits the ground first because gravity pulls it harder.',
+  right:'In a vacuum everything accelerates at the same g ≈ 9.8 m/s². Gravity does pull the heavy object with more force, but it also has proportionally more mass to move, so the acceleration (a = F/m) is identical. The two effects cancel exactly.',
+  ana:'The hammer-and-feather drop on the Moon (Apollo 15, real footage): no air, both land together. On Earth the only reason a feather loses is air resistance, not weight.',
+  tell:'Whenever a question says "in a vacuum" or "ignore air resistance", weight is irrelevant to acceleration. Air resistance is the hidden variable that makes the everyday intuition feel true.'},
+
+ {t:'Current gets "used up" round a circuit',topic:'Electricity',
+  wrong:'The bulb uses up some of the current, so there is less current after the bulb than before it.',
+  right:'Current (charge per second) is the SAME everywhere in a single loop — charge is conserved, none is consumed. What the bulb consumes is ENERGY carried by the charge, not the charge itself.',
+  ana:'A bike chain: every link moves at the same speed all the way round — the chain isn\'t eaten by the gears. The pedals (cell) do work on it, the back wheel (bulb) takes work out, but the same chain passes every point. Energy is transferred; the chain is not consumed.',
+  tell:'In a series circuit, current is identical at every point. If you ever think "less current after the component", you\'ve slipped into the consumed-current model.'},
+
+ {t:'Mass and weight are the same thing',topic:'Forces',
+  wrong:'Weight and mass are interchangeable; an astronaut on the Moon "weighs less" so has less mass.',
+  right:'Mass is the amount of matter (kg), and is the same everywhere. Weight is the force of gravity on that mass (newtons), W = m g, and changes with g. On the Moon your mass is unchanged; your weight is about 1/6.',
+  ana:'Mass is how much "stuff" is in your suitcase — identical on Earth, Moon, or in deep space. Weight is how hard the bathroom scale is pushed, which depends on where you stand.',
+  tell:'Units are the giveaway: kilograms = mass, newtons = weight. If a question changes planet or mentions the Moon/space, expect weight to change and mass to stay put.'},
+
+ {t:'A moving object must have a force pushing it',topic:'Forces',
+  wrong:'If something is moving, there must be a forward force keeping it going; when the force runs out, it stops.',
+  right:'Newton\'s first law: with zero resultant force an object keeps moving at constant velocity forever. Things stop on Earth because of a hidden resultant force — friction or drag — not because "the push ran out".',
+  ana:'Slide on ice, or throw something in deep space: it keeps gliding because there\'s almost nothing to slow it. The "you need a constant push" feeling comes from living inside constant friction.',
+  tell:'Constant velocity ⇒ balanced forces (resultant zero). Acceleration ⇒ unbalanced. A steady speed needs a force only to cancel friction, not to "maintain motion".'},
+
+ {t:'Heat and temperature are the same',topic:'Particle model',
+  wrong:'A hotter thing always contains more heat energy.',
+  right:'Temperature measures the AVERAGE kinetic energy per particle. Thermal energy ("heat") is the TOTAL energy of all particles, so it also depends on how many there are and what the substance is. Small + very hot can hold less energy than large + warm.',
+  ana:'A sparkler burns at ~1000 °C but barely warms you — tiny mass, little total energy. A lukewarm bath at 40 °C holds vastly more thermal energy and could scald you for far longer. High temperature ≠ lots of heat.',
+  tell:'If a problem changes the mass or the material, you need thermal energy (Q = m c ΔT), not temperature alone. Temperature is per-particle; heat is the total.'},
+
+ {t:'Heavier / bigger things sink, lighter ones float',topic:'Forces',
+  wrong:'Heavy objects sink and light ones float — it\'s about weight.',
+  right:'Floating is about DENSITY relative to the fluid, not weight. An object floats if it\'s less dense than the fluid it displaces. A huge steel ship floats; a tiny steel bolt sinks — same material, opposite outcome.',
+  ana:'A steel ship floats because its overall shape encloses lots of air, dropping its average density below water\'s. Crush it into a solid block and the same steel sinks. It was never about how heavy — it\'s mass per volume.',
+  tell:'Compare densities, not weights. "Would 1 cm³ of this be heavier than 1 cm³ of the fluid?" is the real question.'},
+
+ {t:'Vacuums "suck" / nature abhors a vacuum',topic:'Pressure',
+  wrong:'A vacuum actively pulls things into it.',
+  right:'There is no pulling force. A vacuum is just absence of pressure; the gas on the OTHER side pushes things in. All the action is the higher-pressure side pushing toward the lower-pressure side.',
+  ana:'A drinking straw: you don\'t suck the drink up — you lower the pressure in your mouth, and atmospheric pressure pushes the drink up the straw. The push comes from outside, not a pull from the gap.',
+  tell:'Reframe every "suction" as "higher pressure pushing in". Pressure differences push; they never pull.'},
+
+ {t:'In space there\'s no gravity',topic:'Forces / Space',
+  wrong:'Astronauts on the ISS float because there\'s no gravity that far up.',
+  right:'Gravity at the ISS is still ~90% of surface gravity. They float because they\'re in continuous FREE FALL — the station and everything in it fall toward Earth together while moving sideways fast enough to keep missing it (orbit). Falling together = apparent weightlessness.',
+  ana:'A dropped lift: for the few seconds it falls, you and the floor fall at the same rate, so you feel weightless. The ISS is a lift that falls forever because it\'s also moving sideways at ~7.7 km/s.',
+  tell:'"Weightless" almost always means free fall, not absence of gravity. Orbit = falling and missing the ground.'},
+
+ {t:'Bigger resistance means bigger current',topic:'Electricity',
+  wrong:'Adding more resistance gives more current because resistance "powers" the flow.',
+  right:'Resistance opposes current. For a fixed voltage, I = V/R, so more resistance means LESS current. Resistance is the bottleneck, never the driver.',
+  ana:'A crowded corridor: the narrower and more crowded it is (higher resistance), the fewer people get through per second (lower current). Voltage is how hard you push from behind.',
+  tell:'I = V/R. Resistance is on the bottom — up it goes, down current comes (for fixed V).'},
+
+ {t:'Sound and light travel the same way',topic:'Waves',
+  wrong:'Sound and light are basically the same kind of wave.',
+  right:'Sound is a LONGITUDINAL wave needing a medium (particles compress and rarefy) — no air, no sound. Light is a TRANSVERSE electromagnetic wave that travels through vacuum and is ~880,000× faster. Different mechanism, different requirements.',
+  ana:'Sound is a slinky pushed end-on — compressions travelling through stuff. Light is a rope shaken side-to-side, and it needs no rope at all. That\'s why space is silent but not dark.',
+  tell:'"Through a vacuum?" Light yes, sound no. Longitudinal = sound/along; transverse = light/across.'},
+
+ {t:'Acceleration means speeding up',topic:'Motion',
+  wrong:'Acceleration only means going faster; slowing down isn\'t acceleration.',
+  right:'Acceleration is any change in velocity — speeding up, slowing down (negative acceleration), OR changing direction at constant speed. A car going round a roundabout at steady speed is accelerating because its direction changes.',
+  ana:'Velocity is an arrow (size + direction). Bend the arrow round a corner without changing its length and you\'ve still changed velocity — so there\'s acceleration, and therefore a resultant force (which is why you feel thrown to the side).',
+  tell:'Direction change = acceleration = resultant force. Circular motion at constant speed is still accelerating.'},
+
+ {t:'Energy gets "used up" and disappears',topic:'Energy',
+  wrong:'When a ball stops bouncing, its energy is used up and gone.',
+  right:'Energy is conserved — never created or destroyed, only transferred between stores and dissipated. The "lost" energy spread out as thermal energy (heat in the ball, ground, and air) and a little sound. It\'s not gone; it\'s diluted into a less useful form.',
+  ana:'A bank transfer: moving money between current and savings doesn\'t change your net worth. Energy moves between kinetic, gravitational, elastic, thermal stores — the total is fixed. "Wasted" energy is just money scattered as untraceable coins (thermal), still there but impossible to gather back.',
+  tell:'Never say energy is "used up". Ask "which store did it move to?" — usually thermal via friction/drag. Dissipated ≠ destroyed.'},
+];
+/* ============ DATA: analogy bank ============ */
+const ANA=[
+ {topic:'Electricity',k:'Current = a bike chain',v:'Charge isn\'t consumed, it circulates. Every link of the chain moves at the same speed all the way round — so current is identical at every point in a series loop. The cell does work on the chain; the bulb takes work out; the chain itself is never eaten.'},
+ {topic:'Electricity',k:'Voltage = height of a water tank',v:'Voltage (potential difference) is the energy given per unit charge — the "push". A higher tank gives water more pressure; a higher voltage gives charge more energy to dump in components. EMF is the pump that lifts the water back up.'},
+ {topic:'Electricity',k:'Resistance = a crowded corridor',v:'The narrower and more crowded the corridor, the fewer people pass per second for the same push. More resistance ⇒ less current at fixed voltage. I = V/R.'},
+ {topic:'Energy',k:'Energy stores = bank accounts',v:'Energy lives in accounts — kinetic, gravitational, elastic, chemical, thermal. Conservation = your net worth is fixed; you only ever transfer between accounts. "Wasted" energy is coins scattered as thermal — still yours, just impossible to collect back.'},
+ {topic:'Forces',k:'Newton 1 = sliding on ice',v:'With no resultant force, motion continues unchanged. On ice friction nearly vanishes and you glide; in space you\'d glide forever. The everyday "needs a constant push" feeling is just constant friction in disguise.'},
+ {topic:'Forces',k:'Newton 2 (F=ma) = shopping trolley',v:'An empty trolley leaps forward from a small push; a full one barely moves from the same push. Same force, more mass ⇒ less acceleration. a = F/m made physical.'},
+ {topic:'Forces',k:'Newton 3 = stepping off a boat',v:'Push the boat backward and it pushes you forward — equal and opposite. Rockets do the same to exhaust gas. Forces always come in pairs acting on different objects.'},
+ {topic:'Pressure',k:'Pressure = high heels vs flat shoes',v:'Same weight, tiny area under a stiletto ⇒ huge pressure (dents floors); spread over a flat sole ⇒ low pressure. P = F/A. A bed of nails works by spreading force over many points.'},
+ {topic:'Waves',k:'Waves = a Mexican wave',v:'The wave travels round the stadium but each person stays in their seat — energy and the pattern move, the medium does not. Waves transfer energy without transferring matter.'},
+ {topic:'Waves',k:'Transverse vs longitudinal = rope vs slinky',v:'Shake a rope side-to-side and the wiggle travels along it while the rope moves across the motion — transverse (light, water). Push a slinky end-on and compressions travel along the push direction — longitudinal (sound).'},
+ {topic:'Waves',k:'Refraction = trolley hitting mud at an angle',v:'A trolley rolling onto mud at an angle: one wheel slows before the other, so it swings round and changes direction. Light slows entering glass; if it hits at an angle, one side slows first and the beam bends. Same mechanism.'},
+ {topic:'Radioactivity',k:'Decay = popcorn popping',v:'You can\'t predict which kernel pops next — each is random — but you can predict the overall rate. Radioactive decay is random per nucleus yet statistically precise in bulk, which is why half-life is reliable even though individual atoms aren\'t.'},
+ {topic:'Radioactivity',k:'Half-life = a bucket of dice',v:'Roll thousands of dice, remove every 6, re-roll, repeat. The count drops by a predictable fraction each round even though no single die is predictable. Half-life is the time for the population to halve, set by probability not by clock.'},
+ {topic:'Particle model',k:'Temperature vs heat = sparkler vs bath',v:'A sparkler at 1000 °C barely warms you (little total energy); a 40 °C bath holds enormous thermal energy. Temperature = average energy per particle; heat = total across all particles.'},
+ {topic:'Particle model',k:'Specific heat capacity = bucket size',v:'Water has a huge heat capacity — a big bucket that takes lots of energy to fill (heat up) and holds it well. That\'s why the sea moderates coastal climates and why water is used as a coolant.'},
+ {topic:'Motion',k:'Velocity = an arrow, not a number',v:'Velocity has size and direction. Bend the arrow round a corner without changing its length and you\'ve still changed velocity — hence acceleration and a resultant force in circular motion, even at constant speed.'},
+ {topic:'Forces',k:'Momentum = lorry vs bike',v:'A lorry and a bike at the same speed — the lorry is far harder to stop because p = mv. Momentum bundles "how much motion" by combining mass and velocity; big mass means big momentum even at modest speed.'},
+ {topic:'Energy',k:'Power = two cranes, same load',v:'Two cranes lift identical loads to the same height; the faster one is more powerful. Power = energy transferred per second. Same work, less time ⇒ more power.'},
+ {topic:'Energy',k:'Work = pushing a wall does none',v:'Strain against an immovable wall all day and, in physics, you do zero work — nothing moves. Work = force × distance moved in the force\'s direction. Everyday "effort" and physics "work" are different things.'},
+ {topic:'Forces',k:'Density = box of feathers vs box of lead',v:'Same box (volume), wildly different mass. Density is mass per unit volume — it decides floating/sinking (vs the fluid), not how heavy something happens to be overall.'},
+];
+
+/* ============ DATA: code-it challenges (uses CS background) ============ */
+const SIMS=[
+ {lvl:'Warm-up',concept:'Kinematics / SUVAT',t:'Projectile motion',
+  d:'Step a ball through small time-steps under gravity; plot its arc. Vary launch angle and speed. You\'ll feel why 45° maximises range and why horizontal and vertical motion are independent — a thing students memorise but rarely believe until they\'ve coded it.',
+  win:'When you see horizontal velocity stay constant while vertical changes, the "independence of components" clicks permanently.'},
+ {lvl:'Warm-up',concept:'Forces / Newton 2',t:'Terminal velocity',
+  d:'Add a drag force proportional to v (or v²) opposing motion. Watch acceleration fall to zero as drag grows to match weight. The object stops speeding up without any "limit" hard-coded — it emerges.',
+  win:'Terminal velocity stops being a definition to recall and becomes an obvious consequence of forces balancing.'},
+ {lvl:'Core',concept:'SHM / energy',t:'Pendulum or mass-on-spring',
+  d:'Simulate restoring force F = −kx. Plot displacement, velocity, and the kinetic/potential energy trade-off over time. Watch energy slosh between stores while the total stays flat (until you add damping).',
+  win:'You see conservation of energy as a live, moving thing — and damping shows you exactly where energy "goes".'},
+ {lvl:'Core',concept:'Waves / superposition',t:'Two-wave interference',
+  d:'Add two sine waves and plot the sum. Slide their phase and frequency. Constructive and destructive interference, beats, and standing waves all appear from one + operation.',
+  win:'Superposition becomes literally "just add the displacements" — the whole topic collapses into one line of code.'},
+ {lvl:'Core',concept:'Electricity',t:'Series/parallel circuit solver',
+  d:'Given resistor values and a supply voltage, compute current everywhere. Print current at each point so you can SEE it\'s identical in series and splits in parallel. Kills the "current used up" model dead.',
+  win:'Watching the same current value print at every series node retires the consumed-current misconception for good.'},
+ {lvl:'Stretch',concept:'Radioactivity',t:'Decay — Monte Carlo',
+  d:'You\'ve built Monte Carlo before. Point it here: N nuclei, each with a fixed decay probability per step. Count survivors over time; overlay the exponential N = N₀e^(−λt). Watch the random simulation hug the smooth law as N grows.',
+  win:'The bridge from "random per atom" to "predictable half-life" becomes something you generated, not something you were told.'},
+ {lvl:'Stretch',concept:'Fields / gravity',t:'N-body orbit',
+  d:'Two or three masses under mutual gravity, F = Gm₁m₂/r². Integrate and watch orbits form, decay, or fling apart. Inverse-square gets intuitive when you can break orbits by tweaking one number.',
+  win:'Inverse-square law and orbital mechanics move from formula to felt behaviour you can perturb and break.'},
+ {lvl:'Stretch',concept:'Thermal / RC',t:'Capacitor discharge',
+  d:'Model an RC circuit discharging: dQ/dt = −Q/RC. Plot the exponential decay; vary R and C to change the time constant. Same exponential shape as radioactive decay — notice the pattern repeating across physics.',
+  win:'You start seeing the same exponential everywhere (decay, discharge, cooling) — a structural insight worth more than any single fact.'},
+];
+/* ============ render: reference banks ============ */
+SEC.misconceptions=()=>{
+  const topics=[...new Set(MIS.map(m=>m.topic))];
+  const items=MIS.map((m,i)=>`
+    <div class="acc" data-topic="${m.topic}">
+      <button onclick="toggleAcc(this)">
+        <span><span class="mono" style="color:var(--t-concept);font-size:.8em">✕</span> ${m.t}</span>
+        <span style="display:flex;gap:8px;align-items:center">
+          <span class="tag" style="background:var(--ink-soft)">${m.topic}</span>
+          <span class="arrow">›</span>
+        </span>
+      </button>
+      <div class="body">
+        <p style="margin-top:12px"><span class="tg" style="background:var(--t-concept)">THE WRONG MODEL</span><br><span class="muted">${m.wrong}</span></p>
+        <p><span class="tg" style="background:var(--t-slip)">WHAT'S TRUE</span><br>${m.right}</p>
+        <div class="note" style="margin:10px 0"><span class="eyebrow">The analogy that dislodges it</span>${m.ana}</div>
+        <p style="margin-bottom:14px"><span class="tg" style="background:var(--t-trigger)">THE TELL</span><br><span class="muted">${m.tell}</span></p>
+      </div>
+    </div>`).join('');
+  return `
+  <div class="eyebrow">Reference bank · 10</div>
+  <h2 class="h-sec">Misconception fixes</h2>
+  <p class="lead">The broken models that survive GCSE and then break A-level. Each is paired with the correct mechanism and the concrete analogy that makes the wrong version stop feeling true. When Diagnose flags a <span class="tg" style="background:var(--t-concept)">CONCEPTUAL ERROR</span>, come here.</p>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px">
+    <button class="btn sm ghost filt on" data-f="all" onclick="filtMis(this,'all')">All</button>
+    ${topics.map(t=>`<button class="btn sm ghost filt" data-f="${t}" onclick="filtMis(this,'${t}')">${t}</button>`).join('')}
+  </div>
+  <div id="misList">${items}</div>`;
+};
+
+SEC.analogies=()=>{
+  const topics=[...new Set(ANA.map(a=>a.topic))];
+  const cards=ANA.map(a=>`
+    <div class="card analo" data-topic="${a.topic}" style="margin:0">
+      <span class="tag" style="background:var(--ink-soft)">${a.topic}</span>
+      <h4 style="margin:10px 0 6px;font-size:1.04rem">${a.k}</h4>
+      <p style="margin:0;font-size:.92rem;color:var(--ink-soft)">${a.v}</p>
+    </div>`).join('');
+  return `
+  <div class="eyebrow">Reference bank · 11</div>
+  <h2 class="h-sec">Analogy bank</h2>
+  <p class="lead">Twenty load-bearing analogies across the GCSE core. An analogy isn't decoration — it's a correct mental model you can run forward to predict what happens. Reach for these in Repair, and when inventing your own transfer scenarios.</p>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px">
+    <button class="btn sm ghost filt on" data-f="all" onclick="filtAna(this,'all')">All</button>
+    ${topics.map(t=>`<button class="btn sm ghost filt" data-f="${t}" onclick="filtAna(this,'${t}')">${t}</button>`).join('')}
+  </div>
+  <div class="grid" id="anaList" style="grid-template-columns:1fr 1fr">${cards}</div>`;
+};
+
+SEC.sims=()=>{
+  const order={'Warm-up':0,'Core':1,'Stretch':2};
+  const lvlColor={'Warm-up':'var(--t-slip)','Core':'var(--accent-deep)','Stretch':'var(--t-comp)'};
+  const items=[...SIMS].sort((a,b)=>order[a.lvl]-order[b.lvl]).map(s=>`
+    <div class="acc">
+      <button onclick="toggleAcc(this)">
+        <span>${s.t}</span>
+        <span style="display:flex;gap:8px;align-items:center">
+          <span class="tag" style="background:${lvlColor[s.lvl]}">${s.lvl}</span>
+          <span class="tag" style="background:var(--ink-soft)">${s.concept}</span>
+          <span class="arrow">›</span>
+        </span>
+      </button>
+      <div class="body">
+        <p style="margin-top:12px">${s.d}</p>
+        <div class="note" style="margin:8px 0 14px"><span class="eyebrow">The moment it clicks</span>${s.win}</div>
+      </div>
+    </div>`).join('');
+  return `
+  <div class="eyebrow">Reference bank · 12</div>
+  <h2 class="h-sec">Code-it challenges</h2>
+  <p class="lead">Your sharpest tool, because a simulation can't be hand-waved. Each one forces you to state a physical model precisely enough for a machine to run it — which is the same as understanding it. Roughly easiest-first. Pick whichever maps to what you're repairing.</p>
+  <div class="note"><span class="eyebrow">Why this beats more past papers for you</span>You're a CS student who's already written a Monte Carlo engine. A physics simulation is comprehension, application, and intuition-building in one artefact — and it carries straight into A-level, where the maths becomes load-bearing.</p>
+  ${items}`;
+};
+
+SEC.alevel=()=>`
+  <div class="eyebrow">Phase next · 13</div>
+  <h2 class="h-sec">The A-level bridge</h2>
+  <p class="lead">Once GCSE diagnostics come back clean — meaning correct <em>models</em>, not just passing marks — switch to learning concept-by-concept. Two things change, and both suit how you already like to learn.</p>
+
+  <h3 class="blk">What's different about A-level</h3>
+  <ul class="clean">
+    <li><strong>The maths becomes load-bearing, not decorative.</strong> Calculus shows up everywhere (rates of change, areas under graphs as real quantities). Your CS background turns this from a barrier into an advantage — lean in.</li>
+    <li><strong>It genuinely rewards deriving from first principles</strong> in a way GCSE doesn't. The "justify the equation's shape" habit from Repair stops being optional and becomes the main event.</li>
+    <li><strong>Topics interlink hard.</strong> Energy threads through mechanics, fields, and thermal physics; the same exponential appears in capacitors and radioactivity. Isolated-topic study quietly fails here.</li>
+  </ul>
+
+  <h3 class="blk">Build a concept map as you go</h3>
+  <p>Because topics interlink, don't treat them as a checklist. Keep a living dependency map — what must be solid <em>before</em> what. A rough mechanics-first ordering:</p>
+  <div class="card mono" style="font-size:.84rem;line-height:1.9;overflow-x:auto">
+    vectors &amp; components<br>
+    &nbsp;&nbsp;└─ kinematics (SUVAT, graphs)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ Newton's laws ── forces &amp; resultants<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├─ momentum &amp; impulse<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├─ work · energy · power ──┐<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ circular motion        │<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ SHM ── oscillations ──┤<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ energy in fields (gravitational · electric)
+  </div>
+  <p class="muted">The same five-phase loop runs unchanged — only now "Repair" leans harder on derivation, and the <a onclick="go('sims')">simulations</a> become genuinely powerful study tools rather than warm-ups.</p>
+
+  <div class="note"><span class="eyebrow">Don't rush the switch</span>The temptation is to leave GCSE the moment the marks are fine. Resist it until the <em>models</em> are clean — a buried misconception costs ten times more to fix once it's load-bearing under A-level material.</p>
+`;
+
+SEC.resources=()=>`
+  <div class="eyebrow">14</div>
+  <h2 class="h-sec">Resources</h2>
+  <p class="lead">A deliberately short list — backbone, not a pile of tabs you never open.</p>
+  <div class="grid two">
+    <div class="card"><h4 style="margin:0 0 6px">Isaac Physics</h4><p style="margin:0;font-size:.92rem;color:var(--ink-soft)">Run by Cambridge, free, spans GCSE → university. Built for problem-solving <em>depth</em> rather than exam-cramming. Make this your backbone for the Apply phase.</p></div>
+    <div class="card"><h4 style="margin:0 0 6px">Physics &amp; Maths Tutor</h4><p style="margin:0;font-size:.92rem;color:var(--ink-soft)">Past papers and mark schemes organised by board and by topic. Your raw material for the Diagnose phase.</p></div>
+    <div class="card"><h4 style="margin:0 0 6px">Anki</h4><p style="margin:0;font-size:.92rem;color:var(--ink-soft)">For the fact/equation layer of Retain. Pairs with the concept-level <a onclick="go('scheduler')">scheduler</a> here — cards for facts, scheduler for problems.</p></div>
+    <div class="card"><h4 style="margin:0 0 6px">A code editor</h4><p style="margin:0;font-size:.92rem;color:var(--ink-soft)">Your real edge. Python + matplotlib is plenty for every <a onclick="go('sims')">code-it challenge</a>. Treat each simulation as a comprehension exam you set yourself.</p></div>
+  </div>
+  <div class="note"><span class="eyebrow">One housekeeping note</span>Confirm your exam board before downloading papers (AQA, Edexcel, OCR). For a pure diagnostic it barely matters — the core physics is shared — but match the board once you're drilling exam technique.</p>
+  <div class="divider"></div>
+  <p class="muted" style="font-size:.86rem">Everything you log in this app — error entries, scheduled reviews, transfer scenarios — is saved in your own browser only. Nothing leaves the page. Keep the file and reopen it to pick up where you left off.</p>
+`;
+/* ============ shared small data ============ */
+const TYPE_META={
+  recall:{label:'Recall gap',c:'var(--t-recall)'},
+  trigger:{label:'Trigger gap',c:'var(--t-trigger)'},
+  concept:{label:'Conceptual error',c:'var(--t-concept)'},
+  slip:{label:'Slip',c:'var(--t-slip)'},
+  comp:{label:'Comprehension',c:'var(--t-comp)'},
+};
+const FEYN=[
+ 'Why does a heavier object <em>not</em> fall faster than a light one in a vacuum?',
+ 'Why is the current the same at every point in a series circuit?',
+ 'What is the difference between heat and temperature?',
+ 'Why does an object in orbit feel weightless even though gravity is still acting?',
+ 'Why does adding a second bulb in series make both dimmer?',
+ 'What actually happens to the energy when a bouncing ball finally stops?',
+ 'Why does a car going round a roundabout at steady speed still accelerate?',
+ 'Why does a steel ship float but a steel bolt sinks?',
+ 'How can a sparkler be at 1000 °C but not burn you, while warm water can?',
+ 'Why does refraction bend light when it enters glass?',
+ 'What keeps a satellite up — and why doesn\'t it just fall down?',
+ 'Why does pushing a wall as hard as you can do zero work, in physics terms?',
+];
+const SR_INT=[1,3,7,16,35,75];
+
+const TRANSFER_PROMPTS={
+ 'Forces':['Why does a heavy door swing more slowly than a light one given the same push?','Why is it harder to start a stationary trolley moving than to keep it moving?','Why do you lurch forward when a bus brakes suddenly?','Why does a karate chop work better fast than slow (think force, time, momentum)?'],
+ 'Energy':['Why does a phone charger feel warm even when "doing nothing useful"?','Why does a ball never bounce back to its original height?','Why is it more efficient to coast a bike to a stop than to brake hard?','Where does the chemical energy in your breakfast actually end up by midnight?'],
+ 'Electricity':['Why does a long thin extension lead get warmer than a short fat one?','Why might house lights dim for a moment when a kettle switches on?','Why are Christmas lights wired so one failure doesn\'t kill the whole string (mostly)?','Why does a phone battery drain faster in the cold?'],
+ 'Waves':['Why can you hear around a corner but not see around it?','Why does a straw look bent in a glass of water?','Why is the deep end of a pool further away than it looks?','Why does your voice sound different in the shower?'],
+ 'Particle model':['Why does the sea stay cooler than the sand on a hot day?','Why does blowing on hot soup cool it?','Why do metal railings feel colder than wooden ones at the same temperature?','Why does a pressure cooker cook food faster?'],
+ 'Radioactivity':['Why is carbon dating useless for something a few years old but great for thousands of years?','Why can\'t you "rush" radioactive waste into decaying faster?','Why is a smoke detector\'s tiny radioactive source considered safe?'],
+ 'Motion':['Why does a passenger feel pushed outward on a sharp bend?','Why do dropped objects in a moving train land at your feet, not behind you?','Why does a spinning ice skater speed up when they pull their arms in?'],
+};
+const TRANSFER_TOPICS=Object.keys(TRANSFER_PROMPTS);
+
+/* ============ ERROR LOG ============ */
+function getLog(){return store.get('errorLog',[])}
+function addError(mini){
+  const p=mini?'m':'';
+  const type=document.getElementById(p+'eType').value;
+  const topic=document.getElementById(p+'eTopic').value.trim();
+  const note=document.getElementById(p+'eNote').value.trim();
+  const paper=mini?'':(document.getElementById('ePaper').value.trim());
+  if(!topic&&!note){return}
+  const log=getLog();
+  log.unshift({id:uid(),date:todayISO(),type,topic:topic||'(untitled)',note,paper});
+  store.set('errorLog',log);recordActivity();
+  document.getElementById(p+'eTopic').value='';document.getElementById(p+'eNote').value='';
+  if(!mini&&document.getElementById('ePaper'))document.getElementById('ePaper').value='';
+  rerenderTools();
+}
+function delError(id){store.set('errorLog',getLog().filter(e=>e.id!==id));rerenderTools()}
+let logFilter='all';
+function filtLog(el,f){logFilter=f;document.querySelectorAll('#logFilters .filt').forEach(b=>b.classList.toggle('on',b===el));renderLogList()}
+
+function errorForm(mini){
+  const p=mini?'m':'';
+  const opts=Object.entries(TYPE_META).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join('');
+  return `<div class="card">
+    ${mini?'':'<div class="row"><div><label class="fld">Date</label><input id="eDate" type="date" value="'+todayISO()+'" disabled></div><div><label class="fld">Paper / source</label><input id="ePaper" placeholder="e.g. AQA P1 2019"></div></div>'}
+    <div class="row">
+      <div><label class="fld">Failure type</label><select id="${p}eType">${opts}</select></div>
+      <div><label class="fld">Topic / question</label><input id="${p}eTopic" placeholder="e.g. energy of falling ball"></div>
+    </div>
+    <label class="fld">What actually went wrong (the model you used, before the answer)</label>
+    <textarea id="${p}eNote" placeholder="Be honest about what you were thinking — that's the repairable part."></textarea>
+    <button class="btn amber sm" onclick="addError(${mini?'true':'false'})">Log this gap</button>
+  </div>`;
+}
+function logStats(){
+  const log=getLog();if(!log.length)return'';
+  const counts={};Object.keys(TYPE_META).forEach(k=>counts[k]=0);
+  log.forEach(e=>counts[e.type]=(counts[e.type]||0)+1);
+  const top=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+  return `<div class="t4">${Object.entries(TYPE_META).map(([k,v])=>`<div class="stat"><div class="big" style="color:${v.c}">${counts[k]}</div><div class="lbl">${v.label}</div></div>`).join('')}</div>
+  ${top&&top[1]>0?`<div class="note"><span class="eyebrow">Your cluster</span>Most logged: <strong style="color:${TYPE_META[top[0]].c}">${TYPE_META[top[0]].label}</strong>. ${clusterAdvice(top[0])}</div>`:''}`;
+}
+function clusterAdvice(t){return{
+  recall:'Cheap to fix — push these into flashcards and the scheduler and they\'ll fade fast.',
+  trigger:'You know the tools but miss the cue. Do more <em>interleaved</em> mixed problems so choosing the model becomes the skill you practise.',
+  concept:'The expensive kind. Stop drilling and rebuild these models in Repair using the misconception bank before doing more problems.',
+  slip:'Not a knowledge problem. Build a fixed pre-flight checklist: units to SI first, write the equation, then substitute.',
+  comp:'A vocabulary problem. Drill command words ("describe" vs "explain" vs "evaluate") and key terms until the questions decode instantly.'}[t]}
+
+function renderLogList(){
+  const host=document.getElementById('logList');if(!host)return;
+  let log=getLog();if(logFilter!=='all')log=log.filter(e=>e.type===logFilter);
+  if(!log.length){host.innerHTML='<p class="empty">No entries yet. Log a gap above — patterns appear after a couple of papers.</p>';return}
+  host.innerHTML=log.map(e=>{const m=TYPE_META[e.type];return `<div class="srrow">
+    <span class="tg" style="background:${m.c}">${m.label}</span>
+    <div style="flex:1;min-width:160px"><div class="cn">${esc(e.topic)}</div>${e.note?`<div class="meta" style="color:var(--ink-soft);white-space:normal;font-family:Inter;font-size:.85rem;margin-top:2px">${esc(e.note)}</div>`:''}</div>
+    <span class="meta">${fmtDate(e.date)}${e.paper?' · '+esc(e.paper):''}</span>
+    <button class="btn sm ghost" onclick="delError('${e.id}')" aria-label="delete">✕</button>
+  </div>`}).join('');
+}
+SEC.errorlog=()=>`
+  <div class="eyebrow">Working tool · 07</div>
+  <h2 class="h-sec">Error log</h2>
+  <p class="lead">Every gap, sorted by <em>type</em>, in one place. The value isn't any single entry — it's the cluster that emerges over a few papers, which tells you whether to drill, rebuild models, or fix execution habits.</p>
+  ${errorForm(false)}
+  <div id="logStats">${logStats()}</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin:18px 0 4px" id="logFilters">
+    <button class="btn sm ghost filt ${logFilter==='all'?'on':''}" onclick="filtLog(this,'all')">All</button>
+    ${Object.entries(TYPE_META).map(([k,v])=>`<button class="btn sm ghost filt ${logFilter===k?'on':''}" onclick="filtLog(this,'${k}')">${v.label}</button>`).join('')}
+  </div>
+  <div id="logList"></div>`;
+
+/* ============ SCHEDULER ============ */
+function getSR(){return store.get('srItems',[])}
+function addSR(mini){
+  const p=mini?'m':'';
+  const c=document.getElementById(p+'srInput').value.trim();if(!c)return;
+  const list=getSR();
+  const due=new Date();due.setDate(due.getDate()+SR_INT[0]);
+  list.push({id:uid(),concept:c,added:todayISO(),idx:0,due:due.toISOString().slice(0,10)});
+  store.set('srItems',list);document.getElementById(p+'srInput').value='';recordActivity();rerenderTools();
+}
+function reviewSR(id,solid){
+  const list=getSR();const it=list.find(x=>x.id===id);if(!it)return;
+  if(solid){it.idx=Math.min(it.idx+1,SR_INT.length-1)}else{it.idx=0}
+  const d=new Date();d.setDate(d.getDate()+SR_INT[it.idx]);it.due=d.toISOString().slice(0,10);
+  store.set('srItems',list);rerenderTools();
+}
+function delSR(id){store.set('srItems',getSR().filter(x=>x.id!==id));rerenderTools()}
+function renderSRList(host,miniOnlyDue){
+  if(!host)return;
+  const list=getSR();const today=todayISO();
+  const due=list.filter(x=>x.due<=today).sort((a,b)=>a.due.localeCompare(b.due));
+  const later=list.filter(x=>x.due>today).sort((a,b)=>a.due.localeCompare(b.due));
+  if(!list.length){host.innerHTML='<p class="empty">Nothing scheduled. Add a concept or problem you want to still know in a month.</p>';return}
+  const row=(x,isDue)=>{const over=daysBetween(x.due,today);
+    const status=isDue?(over>0?`${over}d overdue`:'due today'):`in ${daysBetween(today,x.due)}d`;
+    const col=isDue?'var(--due)':'var(--rest)';
+    return `<div class="srrow">
+      <span class="dot" style="background:${col}"></span>
+      <span class="cn">${esc(x.concept)}</span>
+      <span class="meta">${status} · stage ${x.idx+1}/${SR_INT.length}</span>
+      ${isDue?`<span style="display:flex;gap:6px"><button class="btn sm amber" onclick="reviewSR('${x.id}',true)">Solid</button><button class="btn sm ghost" onclick="reviewSR('${x.id}',false)">Struggled</button></span>`:`<button class="btn sm ghost" onclick="delSR('${x.id}')">✕</button>`}
+    </div>`};
+  let html='';
+  if(due.length)html+=`<div class="eyebrow" style="margin:6px 0 8px">Due now · ${due.length}</div>`+due.map(x=>row(x,true)).join('');
+  else if(!miniOnlyDue)html+='<p class="empty">Nothing due today. The amber line is holding. ✓</p>';
+  if(!miniOnlyDue&&later.length)html+=`<div class="eyebrow" style="margin:18px 0 8px">Upcoming</div>`+later.map(x=>row(x,false)).join('');
+  if(miniOnlyDue&&!due.length)html='<p class="empty">Nothing due today. Add something below or open the full scheduler.</p>';
+  host.innerHTML=html;
+}
+function srForm(mini){const p=mini?'m':'';return `<div class="card"><label class="fld">Concept or problem to lock in</label>
+  <div style="display:flex;gap:8px"><input id="${p}srInput" placeholder="e.g. re-solve the projectile range problem" style="margin:0" onkeydown="if(event.key==='Enter')addSR(${mini})">
+  <button class="btn amber" onclick="addSR(${mini})" style="white-space:nowrap">Schedule</button></div>
+  <p class="muted" style="font-size:.8rem;margin:8px 0 0">Reviews widen ${SR_INT.join(' → ')} days. Mark "Solid" only if you produced it cold.</p></div>`}
+SEC.scheduler=()=>`
+  <div class="eyebrow">Working tool · 08</div>
+  <h2 class="h-sec">Review scheduler</h2>
+  <p class="lead">Concept-level spaced repetition — for the things flashcards can't test, like whether you can still <em>solve</em> a problem cold. Each "Solid" pushes the next review further out; each "Struggled" resets it.</p>
+  ${srForm(false)}
+  <div id="srList" style="margin-top:18px"></div>`;
+
+/* ============ TRANSFER NOTEBOOK ============ */
+function getTransfer(){return store.get('transferNotes',[])}
+let curPrompt={topic:TRANSFER_TOPICS[0],text:TRANSFER_PROMPTS[TRANSFER_TOPICS[0]][0]};
+function pullPrompt(mini){
+  const p=mini?'m':'';
+  const topic=document.getElementById(p+'tTopic').value;
+  const arr=TRANSFER_PROMPTS[topic];
+  curPrompt={topic,text:arr[Math.floor(Math.random()*arr.length)]};
+  const el=document.getElementById(p+'tPrompt');if(el)el.textContent=curPrompt.text;
+}
+function saveTransfer(mini){
+  const p=mini?'m':'';
+  const expl=document.getElementById(p+'tExpl').value.trim();if(!expl)return;
+  const list=getTransfer();
+  list.unshift({id:uid(),topic:curPrompt.topic,scenario:curPrompt.text,explanation:expl,date:todayISO()});
+  store.set('transferNotes',list);recordActivity();document.getElementById(p+'tExpl').value='';rerenderTools();
+}
+function delTransfer(id){store.set('transferNotes',getTransfer().filter(x=>x.id!==id));rerenderTools()}
+function transferForm(mini){const p=mini?'m':'';
+  return `<div class="card">
+    <div class="row"><div><label class="fld">Topic</label><select id="${p}tTopic" onchange="pullPrompt(${mini})">${TRANSFER_TOPICS.map(t=>`<option>${t}</option>`).join('')}</select></div>
+    <div style="display:flex;align-items:flex-end"><button class="btn ghost sm" onclick="pullPrompt(${mini})" style="margin-bottom:10px">↻ New scenario</button></div></div>
+    <div class="note" style="margin:4px 0 12px"><span class="eyebrow">Real-world scenario</span><span id="${p}tPrompt" style="font-family:'Space Grotesk';font-weight:500">${curPrompt.text}</span></div>
+    <label class="fld">Your explanation — which concept, what mechanism</label>
+    <textarea id="${p}tExpl" placeholder="Name the physics, then tell the causal story. No equations needed — the mechanism is the point."></textarea>
+    <button class="btn amber sm" onclick="saveTransfer(${mini})">Save to notebook</button>
+  </div>`}
+function renderTransferList(){
+  const host=document.getElementById('tfList');if(!host)return;
+  const list=getTransfer();
+  if(!list.length){host.innerHTML='<p class="empty">Empty. Pull a scenario, explain it, and build your own evidence that you can apply this anywhere.</p>';return}
+  host.innerHTML=list.map(x=>`<div class="card" style="margin:10px 0">
+    <span class="tag" style="background:var(--ink-soft)">${x.topic}</span><span class="meta" style="float:right;color:var(--ink-faint);font-family:'IBM Plex Mono';font-size:.7rem">${fmtDate(x.date)}</span>
+    <p style="font-weight:500;margin:10px 0 6px">${esc(x.scenario)}</p>
+    <p style="margin:0;color:var(--ink-soft);font-size:.92rem">${esc(x.explanation)}</p>
+    <button class="btn sm ghost" style="margin-top:10px" onclick="delTransfer('${x.id}')">Remove</button>
+  </div>`).join('');
+}
+SEC.transfer=()=>`
+  <div class="eyebrow">Working tool · 09</div>
+  <h2 class="h-sec">Transfer notebook</h2>
+  <p class="lead">The Apply phase, made concrete. Pull a real-world scenario, explain which physics governs it and why, and save it. Over time you build a personal bank proving you can use each concept <em>outside</em> the exam — which was the whole goal.</p>
+  ${transferForm(false)}
+  <div id="tfList" style="margin-top:8px"></div>`;
+/* ============ helpers ============ */
+function esc(s){return(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function toggleAcc(btn){btn.parentElement.classList.toggle('open')}
+function filtMis(el,f){document.querySelectorAll('#misList .filt,[data-f]').forEach(()=>{});
+  document.querySelectorAll('.filt').forEach(b=>{});
+  document.querySelectorAll('#misList').forEach(()=>{});
+  document.querySelectorAll('[data-topic]').forEach(()=>{});
+  document.querySelectorAll('#misList .acc').forEach(a=>a.style.display=(f==='all'||a.dataset.topic===f)?'':'none');
+  el.closest('div').querySelectorAll('.filt').forEach(b=>b.classList.toggle('on',b===el));}
+function filtAna(el,f){document.querySelectorAll('#anaList .analo').forEach(a=>a.style.display=(f==='all'||a.dataset.topic===f)?'':'none');
+  el.closest('div').querySelectorAll('.filt').forEach(b=>b.classList.toggle('on',b===el));}
+let feynI=0;function nextFeyn(){feynI=(feynI+1)%FEYN.length;const el=document.getElementById('feynPrompt');if(el)el.innerHTML=FEYN[feynI]}
+
+/* worked-loop accordion (loop page) */
+function workedLoop(){
+  const steps=[
+   ['02','◆ diagnose','var(--t-concept)','You drop a "heavier falls faster" question and get it wrong — you said the 5 kg ball lands before the 1 kg ball. Logged not as "wrong" but as a <strong>conceptual error</strong>: your actual model is that gravity drags heavy things down quicker.'],
+   ['03','◆ repair','var(--t-concept)','You rebuild the model: gravity <em>does</em> pull harder on more mass, but there\'s proportionally more mass to shift, so a = F/m comes out identical. You anchor it with the Moon hammer-and-feather drop. You write the tell: "vacuum / ignore air resistance ⇒ weight irrelevant to acceleration."'],
+   ['04','◆ test','var(--accent-deep)','You shut the page and Feynman it aloud: "Both fall at the same rate because…" — and you make it to the end without going vague. If you\'d stalled, back to Repair.'],
+   ['05','◆ apply','var(--t-slip)','Transfer: why <em>does</em> a feather lose on Earth? (air resistance, not weight). Then you code the <a onclick="go(\'sims\')">terminal-velocity sim</a> and watch a heavy and light object diverge only once drag is switched on — proof you generated yourself.'],
+   ['06','◆ retain','var(--t-comp)','Equation card (W = m g) into Anki; the <em>problem</em> ("explain the vacuum drop") into the <a onclick="go(\'scheduler\')">scheduler</a> for re-attempt in 3 days. Next month you can still produce it cold — it stuck.'],
+  ];
+  return steps.map(s=>`<div class="acc open"><button onclick="toggleAcc(this)"><span><span class="mono" style="color:${s[2]}">${s[0]}</span>&nbsp; ${s[1]}</span><span class="arrow">›</span></button><div class="body"><p style="margin:12px 0 14px">${s[3]}</p></div></div>`).join('');
+}
+
+/* ====================================================================
+   VERSION 2 MODULES — adaptive coach, generators, interactive tools
+   Spliced in before the render engine. All client-side, all persistent-safe.
+   ==================================================================== */
+
+/* ---- activity tracking (powers streaks + dashboard) ---- */
+function recordActivity(){
+  const days=store.get('activityDays',[]);const t=todayISO();
+  if(!days.includes(t)){days.push(t);store.set('activityDays',days)}
+}
+function currentStreak(){
+  const days=store.get('activityDays',[]).slice().sort();
+  if(!days.length)return 0;
+  let streak=0;let d=new Date();
+  for(;;){const iso=d.toISOString().slice(0,10);
+    if(days.includes(iso)){streak++;d.setDate(d.getDate()-1)}
+    else if(streak===0&&iso===todayISO()){d.setDate(d.getDate()-1)} // today not yet done: keep yesterday's streak
+    else break;}
+  return streak;
+}
+
+/* ---- per-page help banners: what it's for + how to use it ---- */
+const HELP={
+ dashboard:{what:'Your home base. It reads everything you\'ve logged and tells you what to work on next.',
+   how:['Glance at the streak and what\'s due.','Read the one recommended action at the top and do it.','Use the weakness bars to see whether your problem is knowledge, recognition, or broken models.']},
+ overview:{what:'The reasoning behind the whole method.',how:['Read once.','Come back when you\'re tempted to just "do more papers".']},
+ loop:{what:'The five-phase cycle you repeat for every topic.',how:['Run the phases in order.','Never skip one — each does a job the others can\'t.','See the worked example to watch one idea pass through all five.']},
+ diagnose:{what:'Turn wrong answers into sorted, fixable information.',how:['After a paper, classify every miss by failure type.','Log it below — patterns appear after a couple of papers.','Don\'t fix anything yet; diagnose the whole section first.']},
+ repair:{what:'Rebuild the broken model, not just the missing fact.',how:['For each gap, relearn the mechanism and why the equation has its shape.','Use the misconception bank for conceptual errors.','Fill the repair worktable in your notes.']},
+ test:{what:'Prove you own it by producing it from an empty head.',how:['Blank-page the concept and derivation.','Do the Feynman pass — explain aloud, no jargon.','Where you go vague is the gap; send it back to Repair.']},
+ apply:{what:'Make concepts work outside exam questions.',how:['Interleave mixed problems so you practise choosing the model.','Invent real-world scenarios, or pull one from the Transfer notebook.','Best of all: simulate it in code.']},
+ retain:{what:'Schedule the comebacks so knowledge survives the month.',how:['Facts → flashcards. Problems → the scheduler.','Review when due, grading yourself honestly.','Keep reviews mixed across topics.']},
+ errorlog:{what:'Every gap, sorted by type, in one place.',how:['Log type, topic, and what you actually believed.','Watch the cluster counts — they tell you what kind of work to do.','Filter by type to drill a single weakness.']},
+ scheduler:{what:'Concept-level spaced repetition for things flashcards can\'t test.',how:['Add a concept or whole problem to re-solve.','When due, attempt it cold, then grade Again / Hard / Good / Easy.','Honest grading is the whole point — recognising ≠ recalling.']},
+ transfer:{what:'Build proof you can apply each concept to the real world.',how:['Pick a topic and pull a scenario.','Name the physics and tell the causal story.','Save it — your notebook becomes evidence of transfer.']},
+ lens:{what:'A daily habit: explain one real thing you saw using physics.',how:['Read today\'s nudge.','Write what you noticed and the physics behind it.','Keep the streak — small daily transfer compounds.']},
+ trigger:{what:'Trains the skill of recognising which model a situation needs — no maths.',how:['Read the scenario.','Select the concept(s) or the single best model.','Check, read why, and log any miss as a trigger gap.']},
+ miscquiz:{what:'Actively hunts the broken models that survive GCSE.',how:['Answer each question honestly — pick what feels true.','If wrong, read why it feels intuitive and the correct mechanism.','Walk the Socratic questions to rebuild the model yourself.']},
+ explorer:{what:'Discover what an equation means by moving its variables.',how:['First predict what happens when a variable changes.','Then drag the sliders and watch the result update live.','Read the insight — the relationship is the lesson, not the number.']},
+ counterfactual:{what:'Tests real understanding by breaking the scenario.',how:['Read the flipped or "what if" situation.','Predict the consequence out loud first.','Reveal the physics and check your reasoning.']},
+ sandbox:{what:'A live playground — change the rules of physics and watch.',how:['Drag gravity, drag, mass, bounciness.','Launch and observe; try to predict before you press go.','Use it to feel concepts the equations only describe.']},
+ conceptmap:{what:'The A-level mechanics dependency tree — what must be solid before what.',how:['Click any node for its core intuition, the A-level shift, and the trap to kill.','Weak topics from your error log are ringed — fix roots before branches.','Never climb a tier until the one above is ironclad.']},
+ misconceptions:{what:'A reference of broken models, each with the analogy that dislodges it.',how:['Filter by topic.','When Diagnose flags a conceptual error, find it here.','Read the tell so you recognise the trap next time.']},
+ analogies:{what:'Load-bearing analogies you can run forward to predict behaviour.',how:['Filter by topic.','Reach for these in Repair and when inventing transfer scenarios.','Try writing your own — it\'s a strong test.']},
+ sims:{what:'Coding challenges that force precise physical models.',how:['Pick one that matches what you\'re repairing.','Build it; the bug you can\'t fix is the physics you don\'t understand.','Start easy, climb to the stretch builds.']},
+ alevel:{what:'How the method changes when you move up to A-level.',how:['Switch only when your GCSE models are clean, not just your marks.','Lean on derivation and the concept map.','Treat simulations as real study tools now.']},
+ resources:{what:'A short backbone of external tools.',how:['Isaac Physics for depth, PMT for papers.','Anki for facts, the scheduler here for problems.','Confirm your exam board before drilling technique.']},
+};
+function helpBanner(id){
+  const h=HELP[id];if(!h)return'';
+  const open=store.get('helpOpen',true);
+  return `<div class="help ${open?'open':''}" id="helpBox">
+    <button class="help-h" onclick="toggleHelp()" aria-expanded="${open}">
+      <span><span class="help-i">?</span> How to use this page</span><span class="arrow">›</span>
+    </button>
+    <div class="help-b">
+      <p style="margin:0 0 8px"><strong>What it's for.</strong> ${h.what}</p>
+      <div class="eyebrow" style="margin-bottom:4px">How to use it</div>
+      <ol class="howlist">${h.how.map(s=>`<li>${s}</li>`).join('')}</ol>
+    </div>
+  </div>`;
+}
+function toggleHelp(){const b=document.getElementById('helpBox');if(!b)return;
+  b.classList.toggle('open');store.set('helpOpen',b.classList.contains('open'))}
+
+/* ---- shared: segmented option button feedback states handled inline ---- */
+/* ====================== DASHBOARD / ADAPTIVE COACH ====================== */
+function dueCount(){const t=todayISO();return getSR().filter(x=>x.due<=t).length}
+function typeCounts(){const c={};Object.keys(TYPE_META).forEach(k=>c[k]=0);getLog().forEach(e=>c[e.type]++);return c}
+function weakTopics(){const m={};getLog().forEach(e=>{const k=e.topic||'(untitled)';m[k]=m[k]||{n:0,concept:0};m[k].n++;if(e.type==='concept')m[k].concept++});
+  return Object.entries(m).map(([k,v])=>({topic:k,...v})).sort((a,b)=>b.n-a.n).slice(0,6)}
+function resurrectable(){const cut=new Date();cut.setDate(cut.getDate()-30);const c=cut.toISOString().slice(0,10);
+  return getLog().filter(e=>e.date<=c)}
+function nextAction(){
+  const due=dueCount();const tc=typeCounts();const log=getLog();const res=resurrectable();
+  if(due>0)return{t:`${due} review${due>1?'s':''} due — clear them first`,d:'Spaced reviews decay fastest when overdue. This is always the highest-value 10 minutes.',to:'scheduler',cta:'Go to scheduler'};
+  if(res.length)return{t:`${res.length} mistake${res.length>1?'s':''} from 30+ days ago — still solid?`,d:'Resurrect an old error and see if you can still solve it cold. If not, it goes into the scheduler.',to:'dashboard',cta:'See below ↓'};
+  if(!log.length)return{t:'Log your first diagnostic',d:'Do a GCSE paper section, then sort every miss by failure type. The app can only coach you once it has data.',to:'diagnose',cta:'Start diagnosing'};
+  const dom=Object.entries(tc).sort((a,b)=>b[1]-a[1])[0];
+  if(dom[1]===0)return{t:'Pick any practice module',d:'No dominant weakness yet. Try the trigger trainer or a misconception check to generate signal.',to:'trigger',cta:'Open trigger trainer'};
+  const route={recall:['scheduler','Flashcard and schedule these — cheap to fix.'],
+    trigger:['trigger','Your bottleneck is recognition, not knowledge. Train it directly.'],
+    concept:['miscquiz','Broken models are the expensive kind. Hunt them with the misconception quiz.'],
+    slip:['diagnose','Execution, not theory. Build a units-first checklist habit.'],
+    comp:['misconceptions','A vocabulary problem. Drill command words and key terms.']}[dom[0]];
+  return{t:`Your bottleneck: ${TYPE_META[dom[0]].label.toLowerCase()}`,d:route[1],to:route[0],cta:'Work on it'};
+}
+function masteryBar(label,pct,col){return `<div style="margin:8px 0">
+  <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:3px"><span style="font-weight:500">${label}</span><span class="mono" style="color:var(--ink-faint)">${pct}%</span></div>
+  <div class="bar"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div></div>`}
+
+SEC.dashboard=()=>{
+  const tc=typeCounts();const total=Object.values(tc).reduce((a,b)=>a+b,0);
+  const streak=currentStreak();const due=dueCount();const tn=getTransfer().length;
+  const act=nextAction();const wt=weakTopics();const res=resurrectable();
+  const maxType=Math.max(1,...Object.values(tc));
+  const bars=Object.entries(TYPE_META).map(([k,v])=>{const n=tc[k];const pct=Math.round(n/maxType*100);
+    return `<div style="display:flex;align-items:center;gap:10px;margin:6px 0">
+      <span style="width:120px;font-size:.82rem">${v.label}</span>
+      <div class="bar" style="flex:1"><div class="bar-fill" style="width:${total?pct:0}%;background:${v.c}"></div></div>
+      <span class="mono" style="font-size:.78rem;color:var(--ink-faint);width:20px;text-align:right">${n}</span></div>`}).join('');
+  const dom=Object.entries(tc).sort((a,b)=>b[1]-a[1])[0];
+  return `
+  <div class="eyebrow">Home · your coach</div>
+  <h2 class="h-sec">Dashboard</h2>
+  <p class="lead">This page reads everything you log and points you at the single highest-value thing to do next. The more you use the app, the sharper it gets.</p>
+
+  <div class="action-card">
+    <div class="eyebrow" style="color:var(--accent)">Do this next</div>
+    <h3 style="margin:6px 0 6px;font-size:1.3rem;color:#fff">${act.t}</h3>
+    <p style="color:#AEB6C9;margin:0 0 14px;font-size:.95rem">${act.d}</p>
+    <button class="btn amber" onclick="go('${act.to}')">${act.cta}</button>
+  </div>
+
+  <div class="t4" style="margin-top:18px">
+    <div class="stat"><div class="big">${streak}</div><div class="lbl">day streak 🔥</div></div>
+    <div class="stat"><div class="big" style="color:${due?'var(--due)':'var(--rest)'}">${due}</div><div class="lbl">reviews due</div></div>
+    <div class="stat"><div class="big">${total}</div><div class="lbl">gaps logged</div></div>
+    <div class="stat"><div class="big">${tn}</div><div class="lbl">transfers saved</div></div>
+  </div>
+
+  <h3 class="blk">Weakness engine</h3>
+  <p class="muted" style="margin-top:-4px">What <em>kind</em> of mistake you make most. This decides whether you need knowledge, recognition, or model-repair work.</p>
+  ${total?`<div class="card">${bars}
+    <div class="note" style="margin:14px 0 0"><span class="eyebrow">Read-out</span>Your most common failure is <strong style="color:${TYPE_META[dom[0]].c}">${TYPE_META[dom[0]].label}</strong>. ${clusterAdvice(dom[0])}</div></div>`
+    :`<div class="card"><p class="empty" style="margin:0">No gaps logged yet. Once you log a few from <a onclick="go('diagnose')">Diagnose</a>, your bottleneck appears here and the whole app starts adapting to it.</p></div>`}
+
+  ${wt.length?`<h3 class="blk">Topics needing attention</h3>
+  <p class="muted" style="margin-top:-4px">Ranked by how often they show up in your error log. Conceptual errors (✕) are weighted as the urgent kind.</p>
+  <div class="card">${wt.map(t=>`<div class="srrow" style="padding:9px 12px">
+    <span class="cn">${esc(t.topic)}</span>
+    ${t.concept?`<span class="tg" style="background:var(--t-concept)">✕ ${t.concept} model error${t.concept>1?'s':''}</span>`:''}
+    <span class="meta">${t.n} log${t.n>1?'s':''}</span></div>`).join('')}</div>`:''}
+
+  ${res.length?`<h3 class="blk">Error resurrection</h3>
+  <p class="muted" style="margin-top:-4px">Mistakes you logged 30+ days ago. The real test of learning: can you still solve them cold?</p>
+  <div class="card">${res.slice(0,5).map(e=>`<div class="srrow" style="padding:10px 12px;flex-wrap:wrap">
+    <span class="tg" style="background:${TYPE_META[e.type].c}">${TYPE_META[e.type].label}</span>
+    <span class="cn">${esc(e.topic)}</span><span class="meta">${fmtDate(e.date)}</span>
+    <button class="btn sm amber" onclick="resurrect('${e.id}')">Still solid → schedule</button></div>`).join('')}
+    <p class="muted" style="font-size:.82rem;margin:10px 0 0">Scheduling adds it to spaced review so a shaky old idea gets re-tested at widening intervals.</p></div>`:''}
+
+  <h3 class="blk">The mastery ladder</h3>
+  <p class="muted" style="margin-top:-4px">"Topic complete" is the wrong target. Real mastery climbs five rungs — this app has a tool for each. Aim to push every topic up the ladder, not tick it off.</p>
+  <div class="card">
+    ${[['Recall','can reproduce facts & equations cold','var(--t-recall)','scheduler'],
+       ['Understanding','holds the correct mechanism','var(--t-concept)','miscquiz'],
+       ['Application','solves varied, unfamiliar problems','var(--accent-deep)','trigger'],
+       ['Transfer','explains real-world scenarios','var(--t-slip)','transfer'],
+       ['Teaching','can explain it to anyone, no jargon','var(--t-comp)','test']]
+      .map((r,i)=>`<div class="ladder-row"><span class="ladder-n">${i+1}</span>
+      <div style="flex:1"><strong>${r[0]}</strong> <span class="muted" style="font-size:.88rem">— ${r[1]}</span></div>
+      <button class="btn sm ghost" onclick="go('${r[3]}')" style="border-color:${r[2]};color:${r[2]}">tool ›</button></div>`).join('')}
+  </div>`;
+};
+function resurrect(id){const e=getLog().find(x=>x.id===id);if(!e)return;
+  const list=getSR();const due=new Date();due.setDate(due.getDate()+1);
+  list.push({id:uid(),concept:'Re-solve: '+e.topic,added:todayISO(),idx:0,due:due.toISOString().slice(0,10)});
+  store.set('srItems',list);recordActivity();go('dashboard',true);
+}
+/* ====================== TRIGGER RECOGNITION TRAINER ====================== */
+const TRIG=[
+ {s:'A satellite moves in a steady circular orbit around Earth.',mode:'multi',
+  opts:[{t:'Gravity',c:1},{t:'Circular motion',c:1},{t:'Friction',c:0},{t:'Centripetal force',c:1},{t:'Air resistance',c:0}],
+  why:'Gravity supplies the centripetal force that keeps it turning in a circle. No friction or air resistance acts in the vacuum of space — that\'s why orbits persist.'},
+ {s:'Two identical trolleys collide and stick together, then move off slower.',mode:'multi',
+  opts:[{t:'Momentum conservation',c:1},{t:'Kinetic energy is conserved',c:0},{t:'Inelastic collision',c:1},{t:'Newton\'s third law',c:1}],
+  why:'Momentum is always conserved in collisions. They stick, so it\'s inelastic — kinetic energy is NOT conserved (some becomes heat/sound). Equal-and-opposite forces act during contact.'},
+ {s:'A bulb glows dimmer when a second identical bulb is added in series.',mode:'single',
+  opts:[{t:'The first bulb uses up the current',c:0},{t:'Total resistance rises, so current falls everywhere',c:1},{t:'Voltage is destroyed by the bulb',c:0}],
+  why:'Adding a bulb in series increases total resistance; with I = V/R the current drops throughout the single loop, so each bulb gets less power. Current is never "used up".'},
+ {s:'A skydiver falls and eventually stops accelerating, descending at a steady speed.',mode:'multi',
+  opts:[{t:'Terminal velocity',c:1},{t:'Balanced forces',c:1},{t:'Weight exceeds drag',c:0},{t:'Air resistance (drag)',c:1}],
+  why:'At terminal velocity drag has grown to equal weight, so forces balance, resultant force is zero, and acceleration stops. Steady speed always means balanced forces.'},
+ {s:'A ball is thrown horizontally off a cliff and follows a curved path.',mode:'multi',
+  opts:[{t:'Independence of horizontal & vertical motion',c:1},{t:'Constant horizontal velocity',c:1},{t:'Vertical acceleration g',c:1},{t:'A forward force pushing it along',c:0}],
+  why:'Horizontal and vertical motions are independent: horizontal velocity stays constant (no horizontal force), while gravity accelerates it downward. No forward force is needed once released.'},
+ {s:'The sea warms up far more slowly than the sand on a hot beach day.',mode:'single',
+  opts:[{t:'Water has a high specific heat capacity',c:1},{t:'Water reflects all the sunlight',c:0},{t:'Sand has more mass',c:0}],
+  why:'Water needs a lot of energy per kilogram to raise its temperature (high specific heat capacity), so it heats and cools slowly — which also moderates coastal climates.'},
+ {s:'A spinning ice skater pulls their arms in and speeds up.',mode:'multi',
+  opts:[{t:'Conservation of angular momentum',c:1},{t:'Moment of inertia decreases',c:1},{t:'They push harder on the ice',c:0}],
+  why:'Angular momentum is conserved. Pulling arms in lowers the moment of inertia, so the rotation rate must rise to compensate — no extra push required.'},
+ {s:'A phone charger feels warm even when the phone is fully charged.',mode:'single',
+  opts:[{t:'Resistive heating — energy dissipated as P = I²R',c:1},{t:'The charger stores heat as a battery',c:0},{t:'Warmth means it is broken',c:0}],
+  why:'Current through the charger\'s components has resistance, dissipating some electrical energy as heat (P = I²R). This is normal inefficiency, not a fault.'},
+ {s:'A straw looks bent where it enters a glass of water.',mode:'single',
+  opts:[{t:'Refraction — light changes speed entering water',c:1},{t:'Reflection off the glass',c:0},{t:'The straw is actually bent',c:0}],
+  why:'Light slows as it passes from water to air and bends at the surface (refraction), so the submerged part appears displaced.'},
+ {s:'You feel pushed outward when a car turns a sharp corner at speed.',mode:'multi',
+  opts:[{t:'Inertia (Newton\'s first law)',c:1},{t:'Change of direction = acceleration',c:1},{t:'A real outward force',c:0},{t:'Centripetal force from the seat/door',c:1}],
+  why:'Your body tends to continue in a straight line (inertia); the car turns, so the seat/door pushes you inward (centripetal). The "outward push" is the felt absence of that — there is no real outward force.'},
+ {s:'A bouncing ball returns to a lower height each bounce until it stops.',mode:'multi',
+  opts:[{t:'Energy dissipation to heat & sound',c:1},{t:'Energy is destroyed',c:0},{t:'Conservation of energy',c:1},{t:'Inelastic deformation',c:1}],
+  why:'Energy is conserved but transfers: each bounce sends some kinetic energy to heat and sound via deformation, so less returns as height. It\'s redistributed, never destroyed.'},
+ {s:'Train tracks are laid with small gaps between sections.',mode:'single',
+  opts:[{t:'Thermal expansion — rails lengthen when hot',c:1},{t:'To save on steel',c:0},{t:'For drainage',c:0}],
+  why:'Metal expands when heated; the gaps give the rails room to lengthen on hot days without buckling.'},
+];
+let trigIdx=0,trigPicked=new Set(),trigDone=false,trigScore={r:0,t:0};
+function renderTrig(){
+  const host=document.getElementById('trigBox');if(!host)return;
+  const it=TRIG[trigIdx];
+  const opts=it.opts.map((o,i)=>{
+    let cls='opt';
+    if(trigDone){if(o.c)cls+=' good';else if(trigPicked.has(i))cls+=' bad';}
+    else if(trigPicked.has(i))cls+=' sel';
+    return `<button class="${cls}" onclick="pickTrig(${i})" ${trigDone?'disabled':''}>
+      <span class="opt-box">${it.mode==='multi'?(trigPicked.has(i)?'✓':''):(trigPicked.has(i)?'●':'')}</span>${esc(o.t)}</button>`}).join('');
+  let fb='';
+  if(trigDone){
+    const correct=it.opts.every((o,i)=>(!!o.c)===trigPicked.has(i));
+    fb=`<div class="${correct?'note':'warn'}" style="margin:14px 0 0">
+      <span class="eyebrow" style="color:${correct?'var(--accent-deep)':'var(--t-concept)'}">${correct?'Correct':'Not quite'}</span>${it.why}
+      ${correct?'':`<div style="margin-top:10px"><button class="btn sm ghost" onclick="logTrigMiss()">Log this as a trigger gap</button></div>`}</div>`;
+  }
+  host.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span class="mono" style="font-size:.74rem;color:var(--ink-faint)">Scenario ${trigIdx+1} / ${TRIG.length}</span>
+      <span class="mono" style="font-size:.74rem;color:var(--ink-faint)">Score ${trigScore.r}/${trigScore.t}</span>
+    </div>
+    <div class="scenario">${esc(it.s)}</div>
+    <p class="muted" style="font-size:.84rem;margin:10px 0 6px">${it.mode==='multi'?'Select every concept at work — no calculation.':'Pick the single best explanation.'}</p>
+    <div class="opts">${opts}</div>
+    ${trigDone?'':`<button class="btn amber" style="margin-top:14px" onclick="checkTrig()" id="trigCheck" ${trigPicked.size?'':'disabled'}>Check</button>`}
+    ${fb}
+    ${trigDone?`<div style="margin-top:14px"><button class="btn" onclick="nextTrig()">${trigIdx<TRIG.length-1?'Next scenario':'Restart set'}</button></div>`:''}`;
+}
+function pickTrig(i){if(trigDone)return;const it=TRIG[trigIdx];
+  if(it.mode==='single'){trigPicked=new Set([i])}else{trigPicked.has(i)?trigPicked.delete(i):trigPicked.add(i)}
+  const b=document.getElementById('trigCheck');renderTrig();}
+function checkTrig(){if(!trigPicked.size)return;const it=TRIG[trigIdx];
+  const correct=it.opts.every((o,i)=>(!!o.c)===trigPicked.has(i));
+  trigDone=true;trigScore.t++;if(correct)trigScore.r++;recordActivity();renderTrig();}
+function nextTrig(){trigIdx=(trigIdx+1)%TRIG.length;if(trigIdx===0){trigScore={r:0,t:0}}trigPicked=new Set();trigDone=false;renderTrig();}
+function logTrigMiss(){const it=TRIG[trigIdx];const list=getLog();
+  list.unshift({id:uid(),date:todayISO(),type:'trigger',topic:it.s.slice(0,48),note:'Missed in trigger trainer. '+it.why,paper:'Trigger trainer'});
+  store.set('errorLog',list);recordActivity();
+  const btn=event.target;btn.textContent='Logged ✓';btn.disabled=true;}
+SEC.trigger=()=>`
+  <div class="eyebrow">Practice · active</div>
+  <h2 class="h-sec">Trigger trainer</h2>
+  <p class="lead">Knowing equations is useless if you don't recognise <em>when</em> to use them — that's the "trigger gap". This drills pure recognition: read a situation, name the physics, no maths. It attacks the most common failure type head-on.</p>
+  <div class="card" id="trigBox"></div>`;
+
+/* ====================== MISCONCEPTION QUIZ + SOCRATIC ====================== */
+const QUIZ=[
+ {mi:0,q:'In a vacuum, a 5 kg ball and a 1 kg ball are dropped together. Which lands first?',
+  opts:[{t:'The 5 kg ball — gravity pulls it harder',c:0},{t:'They land at the same time',c:1},{t:'Depends on their size',c:0}],
+  feels:'It feels obvious that more weight means a faster fall, because in everyday life heavier things often do drop faster — but that\'s air resistance, not weight.',
+  soc:['Gravity does pull harder on the 5 kg ball. So why doesn\'t it win?',
+       'The heavier ball also has more mass to accelerate. What does a = F/m do when BOTH force and mass scale up together?',
+       'If a = F/m and force and mass both ×5, the acceleration is unchanged. So in a vacuum, what decides the fall?']},
+ {mi:1,q:'In a simple series circuit, how does the current just AFTER the bulb compare to just BEFORE it?',
+  opts:[{t:'Less after — the bulb uses some up',c:0},{t:'Exactly the same',c:1},{t:'More after',c:0}],
+  feels:'"The bulb consumes something" feels right because the bulb clearly takes energy from the circuit — but what it takes is energy, not charge.',
+  soc:['If charge piled up or vanished at the bulb, what would happen to the wire over time?',
+       'Think of a bike chain looping round gears — is any chain lost as it passes the gear?',
+       'So what is the bulb actually taking from the charge, if not the charge itself?']},
+ {mi:2,q:'An astronaut travels to the Moon. What happens to their mass and their weight?',
+  opts:[{t:'Both decrease',c:0},{t:'Mass stays the same, weight decreases',c:1},{t:'Both stay the same',c:0}],
+  feels:'We use "weight" and "mass" interchangeably in daily speech, so it feels like they must move together.',
+  soc:['What is mass actually a measure of — does the amount of stuff in the astronaut change on the Moon?',
+       'Weight is a force: W = m g. Which symbol changes between Earth and Moon?',
+       'So which quantity is a property of the object, and which depends on where it is?']},
+ {mi:3,q:'A puck glides at constant velocity across frictionless ice. What is the net (resultant) force on it?',
+  opts:[{t:'A forward force keeping it moving',c:0},{t:'Zero net force',c:1},{t:'A force equal to its weight, forwards',c:0}],
+  feels:'On Earth things slow and stop, so it feels like motion needs a continuous push to keep going.',
+  soc:['What makes ordinary moving things slow down and stop?',
+       'Remove that — frictionless ice, deep space. What would now change the puck\'s motion?',
+       'Newton\'s first law: with no resultant force, what does a moving object do?']},
+ {mi:4,q:'A sparkler at ~1000 °C and a warm bath at 40 °C. Which holds more thermal energy?',
+  opts:[{t:'The sparkler — it\'s far hotter',c:0},{t:'The bath — far more total energy',c:1},{t:'They\'re equal',c:0}],
+  feels:'Higher temperature feels like "more heat", so the glowing 1000 °C sparkler seems to win.',
+  soc:['Temperature measures the average energy per particle. How many particles are in a sparkler tip vs a bathtub?',
+       'Total thermal energy depends on temperature AND how much stuff there is. Which has vastly more stuff?',
+       'So can something be very hot yet hold little total energy?']},
+ {mi:7,q:'Why do astronauts float inside the ISS, 400 km up?',
+  opts:[{t:'There\'s no gravity that high',c:0},{t:'They\'re in continuous free fall (orbit)',c:1},{t:'They\'re beyond Earth\'s pull',c:0}],
+  feels:'Floating looks exactly like zero gravity, and "space = no gravity" is a common shorthand.',
+  soc:['Gravity at the ISS is still about 90% of surface gravity. So it\'s not absent — what else could cause floating?',
+       'In a lift whose cable snaps, you and the floor fall together — what do you feel for those seconds?',
+       'The ISS falls toward Earth but moves sideways fast enough to keep missing it. What is that called?']},
+ {mi:8,q:'For a fixed voltage, you increase the resistance. What happens to the current?',
+  opts:[{t:'It increases',c:0},{t:'It decreases',c:1},{t:'It stays the same',c:0}],
+  feels:'If you picture resistance as "powering" the flow, more of it seems like more current — but resistance opposes flow.',
+  soc:['Write the relationship: I = V / R. If V is fixed and R grows, which way does the fraction go?',
+       'Picture a crowded corridor — does making it narrower let MORE people through per second?',
+       'So is resistance the thing driving current, or the thing limiting it?']},
+ {mi:10,q:'A car drives round a roundabout at a constant 30 mph. Is it accelerating?',
+  opts:[{t:'No — its speed is constant',c:0},{t:'Yes — its direction is changing',c:1},{t:'Only when it brakes',c:0}],
+  feels:'"Accelerating" colloquially means speeding up, so constant speed feels like zero acceleration.',
+  soc:['Velocity has size AND direction. Is the car\'s direction constant on the curve?',
+       'If velocity (the arrow) changes in any way, what must be happening to it?',
+       'A changing velocity needs a resultant force — which is why you feel pushed sideways. So is it accelerating?']},
+ {mi:11,q:'A bouncing ball finally stops. What happened to its energy?',
+  opts:[{t:'It was used up and destroyed',c:0},{t:'It dissipated as heat and sound',c:1},{t:'It turned into mass',c:0}],
+  feels:'The energy clearly "ran out", so it feels like it was consumed and gone.',
+  soc:['Energy can\'t be created or destroyed. So if it\'s not in motion or height any more, where is it?',
+       'Each bounce squashes the ball and makes a sound — what forms of energy are those?',
+       'Is "dissipated and spread out as thermal energy" the same as "destroyed"?']},
+];
+let qIdx=0,qDone=false,qPicked=-1,qSocStep=0,qScore={r:0,t:0};
+function renderQuiz(){
+  const host=document.getElementById('quizBox');if(!host)return;
+  const item=QUIZ[qIdx];const mis=MIS[item.mi];
+  const opts=item.opts.map((o,i)=>{let cls='opt';
+    if(qDone){if(o.c)cls+=' good';else if(i===qPicked)cls+=' bad';}else if(i===qPicked)cls+=' sel';
+    return `<button class="${cls}" onclick="pickQuiz(${i})" ${qDone?'disabled':''}>${esc(o.t)}</button>`}).join('');
+  let fb='';
+  if(qDone){const right=item.opts[qPicked]&&item.opts[qPicked].c;
+    fb=`<div class="${right?'note':'warn'}" style="margin:14px 0 0">
+      <span class="eyebrow" style="color:${right?'var(--accent-deep)':'var(--t-concept)'}">${right?'Correct model':'Broken model caught'}</span>
+      ${right?'':`<p style="margin:0 0 8px"><strong>Why the wrong answer feels right:</strong> ${item.feels}</p>`}
+      <p style="margin:0 0 8px"><strong>What\'s true:</strong> ${mis.right}</p>
+      <p style="margin:0"><strong>Analogy:</strong> ${mis.ana}</p></div>
+      <div class="card" style="margin-top:12px;background:var(--paper-2)">
+        <div class="eyebrow">Rebuild it yourself — Socratic walk</div>
+        <div id="socBox"></div></div>`;
+  }
+  host.innerHTML=`
+    <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+      <span class="mono" style="font-size:.74rem;color:var(--ink-faint)">Question ${qIdx+1} / ${QUIZ.length}</span>
+      <span class="mono" style="font-size:.74rem;color:var(--ink-faint)">Score ${qScore.r}/${qScore.t}</span></div>
+    <div class="scenario">${esc(item.q)}</div>
+    <div class="opts" style="margin-top:12px">${opts}</div>
+    ${fb}
+    ${qDone?`<div style="margin-top:14px"><button class="btn" onclick="nextQuiz()">${qIdx<QUIZ.length-1?'Next question':'Restart quiz'}</button></div>`:''}`;
+  if(qDone)renderSoc();
+}
+function renderSoc(){const box=document.getElementById('socBox');if(!box)return;const soc=QUIZ[qIdx].soc;
+  let html=soc.slice(0,qSocStep+1).map((s,i)=>`<p style="margin:0 0 10px;${i===qSocStep?'':'opacity:.6'}"><span class="mono" style="color:var(--accent-deep)">Q${i+1}.</span> ${s}</p>`).join('');
+  if(qSocStep<soc.length-1)html+=`<button class="btn sm ghost" onclick="qSocStep++;renderSoc()">Next question ›</button>`;
+  else html+=`<p class="mono" style="font-size:.78rem;color:var(--rest);margin:4px 0 0">✓ You\'ve walked the full chain. Say the answer aloud.</p>`;
+  box.innerHTML=html;}
+function pickQuiz(i){if(qDone)return;qPicked=i;qDone=true;qScore.t++;qSocStep=0;
+  if(QUIZ[qIdx].opts[i].c)qScore.r++;recordActivity();renderQuiz();}
+function nextQuiz(){qIdx=(qIdx+1)%QUIZ.length;if(qIdx===0)qScore={r:0,t:0};qDone=false;qPicked=-1;qSocStep=0;renderQuiz();}
+SEC.miscquiz=()=>`
+  <div class="eyebrow">Practice · active</div>
+  <h2 class="h-sec">Misconception check</h2>
+  <p class="lead">Each question is built around a tempting wrong answer — the exact broken model that survives GCSE. Pick what feels true. If it's the trap, you'll see why it fooled you, the correct mechanism, and a Socratic chain that rebuilds the idea from your own reasoning.</p>
+  <div class="card" id="quizBox"></div>`;
+/* ====================== EQUATION EXPLORER (predict → reveal) ====================== */
+const EQS=[
+ {id:'ke',name:'Kinetic energy',form:'Eₖ = ½ · m · v²',unit:'J',
+  vars:[{s:'m',label:'mass',min:1,max:50,step:1,val:10,unit:'kg'},{s:'v',label:'velocity',min:0,max:20,step:1,val:5,unit:'m/s'}],
+  calc:v=>0.5*v.m*v.v*v.v,
+  insight:'v is squared. Double the velocity and energy <strong>quadruples</strong>; double the mass and it only doubles. Speed dominates energy — which is why crash energy rises so steeply with speed.',
+  predict:{q:'Before touching anything: if you double the velocity (mass fixed), kinetic energy will…',opts:['double','quadruple','stay the same'],a:1}},
+ {id:'weight',name:'Weight',form:'W = m · g',unit:'N',
+  vars:[{s:'m',label:'mass',min:1,max:100,step:1,val:50,unit:'kg'},{s:'g',label:'gravity',min:0,max:25,step:0.5,val:9.8,unit:'N/kg'}],
+  calc:v=>v.m*v.g,
+  insight:'Mass stays fixed wherever you go; weight scales with g. On the Moon (g ≈ 1.6) the same mass weighs about a sixth. Mass is the stuff; weight is the pull.',
+  predict:{q:'Move the mass slider to the Moon\'s gravity (~1.6). The mass reading will…',opts:['drop too','stay the same','go up'],a:1}},
+ {id:'ohm',name:'Ohm\'s law (current)',form:'I = V / R',unit:'A',
+  vars:[{s:'V',label:'voltage',min:1,max:24,step:1,val:12,unit:'V'},{s:'R',label:'resistance',min:1,max:100,step:1,val:6,unit:'Ω'}],
+  calc:v=>v.V/v.R,
+  insight:'Resistance is on the bottom: raise R and current <strong>falls</strong>. Resistance limits flow, it never drives it — the classic backwards intuition.',
+  predict:{q:'With voltage fixed, you slide resistance much higher. Current will…',opts:['increase','decrease','stay the same'],a:1}},
+ {id:'power',name:'Resistive heating',form:'P = I² · R',unit:'W',
+  vars:[{s:'I',label:'current',min:0,max:10,step:0.5,val:2,unit:'A'},{s:'R',label:'resistance',min:1,max:50,step:1,val:5,unit:'Ω'}],
+  calc:v=>v.I*v.I*v.R,
+  insight:'Current is squared, so heat dissipated climbs steeply with current. This is why thin overloaded wires get dangerously hot and why power is sent at high voltage / low current.',
+  predict:{q:'Double the current (resistance fixed). Power dissipated will…',opts:['double','quadruple','halve'],a:1}},
+ {id:'fma',name:'Newton\'s second law',form:'a = F / m',unit:'m/s²',
+  vars:[{s:'F',label:'resultant force',min:0,max:200,step:5,val:50,unit:'N'},{s:'m',label:'mass',min:1,max:100,step:1,val:25,unit:'kg'}],
+  calc:v=>v.F/v.m,
+  insight:'For the same force, more mass means less acceleration — the loaded trolley barely moves. This is exactly why a heavy and light object fall together: gravity gives more force AND more mass, cancelling.',
+  predict:{q:'Same force, but you double the mass. Acceleration will…',opts:['double','halve','stay the same'],a:1}},
+ {id:'gpe',name:'Gravitational PE',form:'Eₚ = m · g · h',unit:'J',
+  vars:[{s:'m',label:'mass',min:1,max:50,step:1,val:10,unit:'kg'},{s:'h',label:'height',min:0,max:30,step:1,val:10,unit:'m'}],
+  calc:v=>v.m*9.8*v.h,
+  insight:'All three factors are linear here (g fixed at 9.8). Lifting twice as high stores twice the energy — which becomes kinetic energy on the way down, linking GPE and KE.',
+  predict:{q:'Lift the same mass to triple the height. Stored energy will…',opts:['triple','×9','stay the same'],a:0}},
+];
+let exIdx=0,exPredicted=false,exVals={},exPredPick=-1;
+function loadEx(){const e=EQS[exIdx];exVals={};e.vars.forEach(v=>exVals[v.s]=v.val);exPredicted=false;exPredPick=-1;}
+function renderEx(){
+  const host=document.getElementById('exBox');if(!host)return;const e=EQS[exIdx];
+  const tabs=EQS.map((q,i)=>`<button class="seg ${i===exIdx?'on':''}" onclick="exIdx=${i};loadEx();renderEx()">${q.name}</button>`).join('');
+  let body;
+  if(!exPredicted){
+    body=`<div class="predict">
+      <div class="eyebrow">Predict first</div>
+      <p style="margin:6px 0 12px;font-weight:500">${e.predict.q}</p>
+      <div class="opts">${e.predict.opts.map((o,i)=>`<button class="opt" onclick="exPredict(${i})">${o}</button>`).join('')}</div>
+      <p class="muted" style="font-size:.82rem;margin:10px 0 0">Committing to a prediction first is what turns a slider into learning.</p>
+    </div>`;
+  }else{
+    const res=e.calc(exVals);
+    const sliders=e.vars.map(v=>`<div class="sld">
+      <div style="display:flex;justify-content:space-between;font-size:.84rem;margin-bottom:2px"><span>${v.label} (${v.s})</span><span class="mono">${exVals[v.s]} ${v.unit}</span></div>
+      <input type="range" min="${v.min}" max="${v.max}" step="${v.step}" value="${exVals[v.s]}" oninput="exSet('${v.s}',this.value)"></div>`).join('');
+    const correct=exPredPick===e.predict.a;
+    body=`<div class="${correct?'note':'warn'}" style="margin:0 0 14px">
+        <span class="eyebrow" style="color:${correct?'var(--accent-deep)':'var(--t-concept)'}">Your prediction: ${e.predict.opts[exPredPick]} — ${correct?'right':'let the sliders show you'}</span>
+        ${e.insight}</div>
+      ${sliders}
+      <div class="readout"><span class="mono" style="font-size:.86rem;color:var(--ink-faint)">${e.form} =</span>
+        <span class="big-res">${fmtNum(res)}</span><span class="mono">${e.unit}</span></div>`;
+  }
+  host.innerHTML=`<div class="segwrap">${tabs}</div>
+    <h4 class="sub" style="margin:16px 0 2px">${e.name}</h4>
+    <div class="eq" style="margin:8px 0 16px">${e.form}</div>${body}`;
+}
+function fmtNum(n){if(!isFinite(n))return'∞';if(Math.abs(n)>=1000)return Math.round(n).toLocaleString();return Math.round(n*100)/100}
+function exPredict(i){exPredPick=i;exPredicted=true;recordActivity();renderEx();}
+function exSet(s,val){exVals[s]=parseFloat(val);renderEx();
+  // keep focus feel: re-grab slider not needed since values shown in label
+}
+SEC.explorer=()=>`
+  <div class="eyebrow">Practice · interactive</div>
+  <h2 class="h-sec">Equation explorer</h2>
+  <p class="lead">An equation is a relationship, not a string of letters. Predict what a change will do, then move the sliders and watch — until "v is squared" stops being a fact you memorised and becomes something you've seen.</p>
+  <div class="card" id="exBox"></div>`;
+
+/* ====================== COUNTERFACTUAL GENERATOR ====================== */
+const CF=[
+ {topic:'Forces',o:'A ball is dropped on Earth and accelerates downward.',f:'What if gravity suddenly doubled?',r:'It would accelerate twice as fast (a = g, now ~19.6 m/s²), hit the ground sooner and harder. Weight (mg) doubles, but its mass — the amount of stuff — is unchanged.'},
+ {topic:'Forces',o:'A car drives along a flat road and must keep its engine on to hold speed.',f:'What if all friction and air resistance vanished?',r:'It would keep moving at constant velocity with the engine off (Newton\'s first law). On Earth the engine only exists to cancel friction and drag, not to "maintain motion".'},
+ {topic:'Waves',o:'Light travels from air into glass and slows, bending toward the normal.',f:'Flip it: light travels from glass into air.',r:'It speeds up and bends AWAY from the normal. Past a critical angle it can\'t escape at all — total internal reflection, the principle behind optical fibres.'},
+ {topic:'Electricity',o:'Two identical bulbs are wired in series and glow dimly.',f:'What if you rewired them in parallel instead?',r:'Each bulb gets the full supply voltage, so both glow brightly. Total resistance drops, total current rises, and one bulb failing no longer breaks the other\'s circuit.'},
+ {topic:'Particle model',o:'A sealed gas cylinder sits at room temperature with a steady pressure.',f:'What if you doubled the absolute temperature?',r:'Particles move faster and hit the walls harder and more often, so pressure roughly doubles (at fixed volume). Temperature is average particle kinetic energy made visible as pressure.'},
+ {topic:'Energy',o:'A pendulum swings, trading height for speed and back.',f:'What if there were no air resistance or friction at the pivot?',r:'It would swing forever at the same amplitude — energy perfectly cycling between gravitational and kinetic stores. Real pendulums die down only because friction dissipates energy as heat.'},
+ {topic:'Forces',o:'A skydiver reaches terminal velocity and falls at a steady speed.',f:'What if they fell on the Moon (no atmosphere)?',r:'No air means no drag, so there is no terminal velocity — they accelerate the whole way down at the Moon\'s g (~1.6 m/s²), never reaching a steady speed.'},
+ {topic:'Radioactivity',o:'A sample has a half-life of 10 years; after 10 years half remains.',f:'What if you heated it strongly or crushed it?',r:'Nothing changes. Radioactive decay is a property of the unstable nucleus and is unaffected by temperature, pressure, or chemistry — you cannot rush or slow it.'},
+ {topic:'Motion',o:'You drop a coin while standing still and it lands at your feet.',f:'What if you dropped it on a smoothly moving train?',r:'It still lands at your feet. The coin shares the train\'s horizontal velocity (inertia), so from inside it falls straight down — exactly as if the train were still.'},
+ {topic:'Energy',o:'An electric car brakes to a stop using friction brakes.',f:'What if it used regenerative braking instead?',r:'Instead of dumping kinetic energy as brake heat, the motor runs as a generator and returns much of it to the battery. Same physics — energy can\'t be destroyed, only redirected to a more useful store.'},
+];
+let cfIdx=0,cfShown=false;
+function renderCF(){const host=document.getElementById('cfBox');if(!host)return;const c=CF[cfIdx];
+  host.innerHTML=`<span class="tag" style="background:var(--ink-soft)">${c.topic}</span>
+    <p style="margin:12px 0 4px;color:var(--ink-soft);font-size:.92rem"><strong>Setup:</strong> ${esc(c.o)}</p>
+    <div class="scenario" style="margin:8px 0">${esc(c.f)}</div>
+    <p class="muted" style="font-size:.84rem;margin:0 0 12px">Say your prediction out loud — commit to a mechanism — before revealing.</p>
+    ${cfShown?`<div class="note"><span class="eyebrow">The physics</span>${c.r}</div>`:`<button class="btn amber" onclick="cfShown=true;renderCF();recordActivity()">Reveal the physics</button>`}
+    <div style="margin-top:14px"><button class="btn ghost sm" onclick="cfNext()">↻ Another scenario</button></div>`;
+}
+function cfNext(){cfIdx=(cfIdx+1)%CF.length;cfShown=false;renderCF();}
+SEC.counterfactual=()=>`
+  <div class="eyebrow">Practice · interactive</div>
+  <h2 class="h-sec">Counterfactuals</h2>
+  <p class="lead">The fastest way to test whether you understand a mechanism is to break it. Each scenario flips a rule — what if gravity doubled, friction vanished, the light went the other way — and asks you to predict the consequence before revealing it.</p>
+  <div class="card" id="cfBox"></div>`;
+
+/* ====================== DAILY PHYSICS LENS ====================== */
+const LENS=['a kettle boiling','a lift starting and stopping','kicking a football','riding a bicycle','a microwave heating food','a phone charging','ice melting in a drink','a door swinging shut','rain on a car window','a spinning office chair','headphones producing sound','a fridge keeping cool','a bridge under traffic','sunlight through a window','a ball bouncing'];
+function lensToday(){const d=todayISO();let h=0;for(const ch of d)h=(h*31+ch.charCodeAt(0))%9973;return LENS[h%LENS.length]}
+function getLens(){return store.get('lensJournal',[])}
+function saveLens(){const t=document.getElementById('lensText').value.trim();if(!t)return;
+  const list=getLens();list.unshift({id:uid(),date:todayISO(),prompt:lensToday(),text:t});
+  store.set('lensJournal',list);document.getElementById('lensText').value='';recordActivity();go('lens',true);}
+function delLens(id){store.set('lensJournal',getLens().filter(x=>x.id!==id));go('lens',true)}
+SEC.lens=()=>{const list=getLens();const doneToday=list.some(x=>x.date===todayISO());
+  return `
+  <div class="eyebrow">Working tool · daily</div>
+  <h2 class="h-sec">Daily physics lens</h2>
+  <p class="lead">Transfer is a habit, not an event. Once a day, explain one ordinary thing you saw using physics. Tiny, but it trains your brain to see mechanisms everywhere — which is the real goal.</p>
+  <div class="card">
+    <div class="eyebrow">Today's nudge</div>
+    <div class="scenario" style="margin:8px 0 12px">Explain the physics of <strong>${lensToday()}</strong> — or anything else you noticed today.</div>
+    ${doneToday?'<p class="mono" style="color:var(--rest);font-size:.84rem;margin:0 0 10px">✓ Logged today. Add another if you like.</p>':''}
+    <textarea id="lensText" placeholder="What did you notice, and which physics explains it? A sentence or two is plenty."></textarea>
+    <button class="btn amber sm" onclick="saveLens()">Save to journal</button>
+  </div>
+  <h3 class="blk">Your physics-in-the-wild journal</h3>
+  <div id="lensList">${list.length?list.map(x=>`<div class="card" style="margin:10px 0">
+    <span class="meta mono" style="font-size:.7rem;color:var(--ink-faint)">${fmtDate(x.date)} · ${esc(x.prompt)}</span>
+    <p style="margin:8px 0 0;font-size:.93rem">${esc(x.text)}</p>
+    <button class="btn sm ghost" style="margin-top:8px" onclick="delLens('${x.id}')">Remove</button></div>`).join(''):'<p class="empty">Empty. Your first entry starts the journal — and the streak on your dashboard.</p>'}</div>`;
+};
+/* ====================== CONCEPT DEPENDENCY MAP ====================== */
+const NODES=[
+ {id:'vec',label:'Vectors &\ncomponents',x:300,y:40,kw:['vector','component','resolve'],
+  intuition:'Orthogonal directions don\'t talk to each other — what happens horizontally is independent of what happens vertically.',
+  shift:'You stop using scalars and start resolving forces and velocities into components (F·cosθ, F·sinθ).',
+  cs:'Exactly like a 2D game loop: x and y velocity components update independently each frame.',
+  trap:'Treating a diagonal force as a single number instead of two independent components.',prereq:[]},
+ {id:'kin',label:'Kinematics\n(calculus of motion)',x:300,y:140,kw:['kinematic','suvat','velocity','acceleration','motion','speed'],
+  intuition:'Velocity is how fast position updates; acceleration is how fast velocity updates.',
+  shift:'GCSE\'s constant-acceleration SUVAT gives way to changing acceleration via calculus: v = ds/dt, a = dv/dt, s = ∫v dt.',
+  cs:'If you grasp an Euler loop — velocity += accel*dt; position += velocity*dt — you already grasp kinematics.',
+  trap:'Confusing the gradient (rate) with the area (accumulated quantity) on motion graphs.',prereq:['vec']},
+ {id:'newton',label:'Newton\'s laws\n(dynamics)',x:300,y:240,kw:['newton','force','dynamics','resultant','equilibrium','friction'],
+  intuition:'Force doesn\'t cause motion — it CHANGES motion. Zero net force means velocity is unchanged, even at 100 m/s.',
+  shift:'You build free-body diagrams for inclined planes, friction, and connected masses, solving ΣF = ma simultaneously.',
+  cs:'Net force is the only thing that mutates the velocity vector; with ΣF = 0 the state just persists.',
+  trap:'Believing a forward-moving object must have a forward force on it.',prereq:['kin']},
+ {id:'energy',label:'Work–energy\ntheorem',x:160,y:350,kw:['energy','work','power','kinetic','potential','gpe','ke'],
+  intuition:'Energy is scalar bookkeeping. Work is the mechanism that transfers it: force acting over a distance.',
+  shift:'You track transformations between GPE (mgh), KE (½mv²) and dissipation, using W = ∫F·dx.',
+  cs:'A running total you add to and subtract from — direction doesn\'t matter, only amount.',
+  trap:'Saying energy is "used up" rather than transferred to a less useful (usually thermal) store.',prereq:['newton']},
+ {id:'mom',label:'Momentum\n& impulse',x:440,y:350,kw:['momentum','impulse','collision','conservation'],
+  intuition:'Energy tracks force over distance; momentum tracks force over TIME. Impulse = ∫F dt = Δp.',
+  shift:'You use vector components (Tier 1) to handle 2D collisions — balls scattering at angles.',
+  cs:'A conserved vector quantity: the total before equals the total after, summed component-wise.',
+  trap:'Assuming kinetic energy is conserved in every collision — only momentum always is.',prereq:['newton']},
+ {id:'rot',label:'Rotational\nmechanics & moments',x:300,y:455,kw:['moment','torque','rotation','pivot','inertia','angular'],
+  intuition:'Forces can rotate as well as push. The turning effect depends on perpendicular distance from the pivot: M = F·d.',
+  shift:'You solve static equilibrium where BOTH ΣF = 0 and ΣM = 0 must hold.',
+  cs:'Add an angular state (angle, angular velocity) alongside the linear one — same integration, new axis.',
+  trap:'Forgetting that a balanced object needs zero net moment, not just zero net force.',prereq:['energy','mom']},
+];
+function weakNodes(){const topics=getLog().filter(e=>e.type==='concept'||e.type==='trigger').map(e=>(e.topic||'').toLowerCase());
+  const set=new Set();NODES.forEach(n=>{if(topics.some(t=>n.kw.some(k=>t.includes(k))))set.add(n.id)});return set}
+let selectedNode=null;
+function conceptSVG(){
+  const weak=weakNodes();
+  const edge=(a,b)=>{const A=NODES.find(n=>n.id===a),B=NODES.find(n=>n.id===b);
+    return `<line x1="${A.x}" y1="${A.y+18}" x2="${B.x}" y2="${B.y-18}" stroke="var(--line)" stroke-width="2"/>`};
+  let edges='';NODES.forEach(n=>n.prereq.forEach(p=>edges+=edge(p,n.id)));
+  const nodes=NODES.map(n=>{const w=weak.has(n.id);const sel=selectedNode===n.id;
+    const lines=n.label.split('\n');
+    return `<g class="cnode ${sel?'sel':''}" tabindex="0" role="button" aria-label="${n.label.replace(/\n/g,' ')}"
+       onclick="selNode('${n.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selNode('${n.id}')}">
+      <rect x="${n.x-78}" y="${n.y-20}" width="156" height="40" rx="9"
+        fill="${sel?'var(--ink)':'var(--card)'}" stroke="${w?'var(--t-concept)':(sel?'var(--ink)':'var(--line)')}" stroke-width="${w?2.5:1.5}"/>
+      ${lines.map((l,i)=>`<text x="${n.x}" y="${n.y+(lines.length===1?4:(i===0?-2:11))}" text-anchor="middle" font-size="11" font-weight="500"
+        fill="${sel?'#fff':'var(--ink)'}" font-family="Inter">${l}</text>`).join('')}
+      ${w?`<circle cx="${n.x+68}" cy="${n.y-12}" r="7" fill="var(--t-concept)"/><text x="${n.x+68}" y="${n.y-8}" text-anchor="middle" font-size="9" fill="#fff" font-weight="700">!</text>`:''}
+    </g>`}).join('');
+  return `<svg viewBox="0 0 600 510" role="img" aria-label="Mechanics concept dependency tree">${edges}${nodes}</svg>`;
+}
+function selNode(id){selectedNode=id;const svgHost=document.getElementById('cmSvg');if(svgHost)svgHost.innerHTML=conceptSVG();
+  const d=document.getElementById('nodeDetail');const n=NODES.find(x=>x.id===id);if(!d||!n)return;
+  const weak=weakNodes().has(id);const prereqLabels=n.prereq.map(p=>NODES.find(x=>x.id===p).label.replace(/\n/g,' ')).join(', ');
+  d.innerHTML=`<div class="card" style="margin:0">
+    <h4 style="margin:0 0 8px">${n.label.replace(/\n/g,' ')}</h4>
+    ${weak?`<div class="warn" style="margin:0 0 12px"><span class="eyebrow" style="color:var(--t-concept)">Flagged weak</span>Your error log shows conceptual or trigger gaps in this area. Repair it before relying on anything below it in the tree.</div>`:''}
+    <p style="margin:0 0 8px"><strong>Core intuition.</strong> ${n.intuition}</p>
+    <p style="margin:0 0 8px"><strong>The A-level shift.</strong> ${n.shift}</p>
+    <p style="margin:0 0 8px"><strong>CS leverage.</strong> ${n.cs}</p>
+    <p style="margin:0 0 8px"><span class="tg" style="background:var(--t-concept)">TRAP TO KILL</span> ${n.trap}</p>
+    <p style="margin:0;font-size:.86rem;color:var(--ink-faint)"><strong>Depends on:</strong> ${prereqLabels||'nothing — this is a foundation'}</p>
+  </div>`;
+}
+SEC.conceptmap=()=>{selectedNode=null;return `
+  <div class="eyebrow">Reference · A-level</div>
+  <h2 class="h-sec">Concept dependency map</h2>
+  <p class="lead">A-level mechanics is integrated, not modular. This is the order the ideas actually depend on each other — never climb a tier until the one above is ironclad. Topics your error log flags as weak are ringed in red.</p>
+  <div class="card"><div id="cmSvg">${conceptSVG()}</div>
+    <p class="muted" style="font-size:.82rem;margin:10px 0 0;text-align:center">Tap any node for its intuition, the A-level shift, the CS angle, and the trap to kill.</p></div>
+  <div id="nodeDetail" style="margin-top:16px"><p class="empty">Select a node above to see how to master it — and what it secretly depends on.</p></div>`;
+};
+
+/* ====================== PHYSICS SANDBOX (canvas) ====================== */
+let sbRaf=null,sbBalls=[],sbCanvas=null,sbCtx=null;
+let sbG=0.4,sbDrag=0,sbRest=0.8;
+function stopSandbox(){if(sbRaf){cancelAnimationFrame(sbRaf);sbRaf=null}}
+function startSandbox(){
+  sbCanvas=document.getElementById('sbCanvas');if(!sbCanvas)return;
+  sbCtx=sbCanvas.getContext('2d');
+  if(!sbBalls.length)sbDropDemo();
+  stopSandbox();loopSandbox();
+}
+function sbAddBall(r){const W=sbCanvas.width;sbBalls.push({x:40+Math.random()*(W-80),y:40,vx:(Math.random()-.5)*4,vy:0,r:r||(8+Math.random()*16)});}
+function sbDropDemo(){sbBalls=[{x:sbCanvas.width*0.38,y:30,vx:0,vy:0,r:10},{x:sbCanvas.width*0.62,y:30,vx:0,vy:0,r:26}];}
+function sbLaunch(){sbBalls.push({x:24,y:sbCanvas.height-24,vx:7+Math.random()*3,vy:-(9+Math.random()*3),r:11});}
+function sbClear(){sbBalls=[];}
+function loopSandbox(){
+  if(!sbCtx)return;const W=sbCanvas.width,H=sbCanvas.height;
+  sbCtx.clearRect(0,0,W,H);
+  // grid floor line
+  sbCtx.strokeStyle='rgba(22,27,46,.12)';sbCtx.beginPath();sbCtx.moveTo(0,H-2);sbCtx.lineTo(W,H-2);sbCtx.stroke();
+  sbBalls.forEach(b=>{
+    b.vy+=sbG;
+    if(sbDrag>0){const f=1-sbDrag*0.02;b.vx*=f;b.vy*=f;}
+    b.x+=b.vx;b.y+=b.vy;
+    if(b.y+b.r>H){b.y=H-b.r;b.vy*=-sbRest;if(Math.abs(b.vy)<0.6)b.vy=0;b.vx*=0.99;}
+    if(b.x-b.r<0){b.x=b.r;b.vx*=-sbRest;}
+    if(b.x+b.r>W){b.x=W-b.r;b.vx*=-sbRest;}
+    const grd=sbCtx.createRadialGradient(b.x-b.r*.3,b.y-b.r*.3,b.r*.2,b.x,b.y,b.r);
+    grd.addColorStop(0,'#E9A94B');grd.addColorStop(1,'#C77F1A');
+    sbCtx.fillStyle=grd;sbCtx.beginPath();sbCtx.arc(b.x,b.y,b.r,0,7);sbCtx.fill();
+  });
+  sbRaf=requestAnimationFrame(loopSandbox);
+}
+function sbControl(which,val){val=parseFloat(val);if(which==='g')sbG=val;if(which==='drag')sbDrag=val;if(which==='rest')sbRest=val;
+  document.getElementById('sb_'+which+'_v').textContent=val.toFixed(2);}
+SEC.sandbox=()=>`
+  <div class="eyebrow">Practice · sandbox</div>
+  <h2 class="h-sec">Physics sandbox</h2>
+  <p class="lead">Change the rules of the world and watch what happens. Try the "drop two masses" demo with drag at zero — they fall together — then add drag and watch the big one win. Feeling it beats being told it.</p>
+  <div class="card">
+    <canvas id="sbCanvas" width="540" height="300" style="width:100%;height:auto;background:var(--paper-2);border-radius:10px;display:block"></canvas>
+    <div class="sbctl">
+      <div class="sld"><div style="display:flex;justify-content:space-between;font-size:.82rem"><span>Gravity</span><span class="mono" id="sb_g_v">0.40</span></div>
+        <input type="range" min="0" max="1.2" step="0.05" value="0.4" oninput="sbControl('g',this.value)"></div>
+      <div class="sld"><div style="display:flex;justify-content:space-between;font-size:.82rem"><span>Air drag</span><span class="mono" id="sb_drag_v">0.00</span></div>
+        <input type="range" min="0" max="2" step="0.1" value="0" oninput="sbControl('drag',this.value)"></div>
+      <div class="sld"><div style="display:flex;justify-content:space-between;font-size:.82rem"><span>Bounciness</span><span class="mono" id="sb_rest_v">0.80</span></div>
+        <input type="range" min="0" max="1" step="0.05" value="0.8" oninput="sbControl('rest',this.value)"></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+      <button class="btn sm amber" onclick="sbDropDemo()">Drop heavy + light</button>
+      <button class="btn sm" onclick="sbLaunch()">Launch projectile</button>
+      <button class="btn sm ghost" onclick="sbAddBall()">Add ball</button>
+      <button class="btn sm ghost" onclick="sbClear()">Clear</button>
+    </div>
+    <p class="muted" style="font-size:.82rem;margin:12px 0 0">Note: the two demo balls are different sizes but fall identically while drag = 0 — size and weight don't change acceleration under gravity alone. Crank drag up and the larger one slows more, just like a feather in air.</p>
+  </div>`;
+
+/* ====================== SCHEDULER v2 — confidence-based ====================== */
+function reviewSR(id,grade){const list=getSR();const it=list.find(x=>x.id===id);if(!it)return;
+  const max=SR_INT.length-1;
+  if(grade==='again')it.idx=0;
+  else if(grade==='hard')it.idx=it.idx; // repeat same interval
+  else if(grade==='good')it.idx=Math.min(it.idx+1,max);
+  else if(grade==='easy')it.idx=Math.min(it.idx+2,max);
+  const d=new Date();d.setDate(d.getDate()+SR_INT[it.idx]);it.due=d.toISOString().slice(0,10);
+  store.set('srItems',list);recordActivity();rerenderTools();}
+function renderSRList(host,miniOnlyDue){
+  if(!host)return;const list=getSR();const today=todayISO();
+  const due=list.filter(x=>x.due<=today).sort((a,b)=>a.due.localeCompare(b.due));
+  const later=list.filter(x=>x.due>today).sort((a,b)=>a.due.localeCompare(b.due));
+  if(!list.length){host.innerHTML='<p class="empty">Nothing scheduled. Add a concept or whole problem you want to still know in a month.</p>';return}
+  const grades=`<span class="grades">
+     <button class="gbtn again" onclick="reviewSR('$ID','again')" title="Couldn't do it">Again</button>
+     <button class="gbtn hard" onclick="reviewSR('$ID','hard')" title="Got there, hard">Hard</button>
+     <button class="gbtn good" onclick="reviewSR('$ID','good')" title="Solid, cold">Good</button>
+     <button class="gbtn easy" onclick="reviewSR('$ID','easy')" title="Trivial now">Easy</button></span>`;
+  const row=(x,isDue)=>{const over=daysBetween(x.due,today);
+    const status=isDue?(over>0?`${over}d overdue`:'due today'):`in ${daysBetween(today,x.due)}d`;
+    return `<div class="srrow">
+      <span class="dot" style="background:${isDue?'var(--due)':'var(--rest)'}"></span>
+      <span class="cn">${esc(x.concept)}</span>
+      <span class="meta">${status} · stage ${x.idx+1}/${SR_INT.length}</span>
+      ${isDue?grades.replace(/\$ID/g,x.id):`<button class="btn sm ghost" onclick="delSR('${x.id}')">✕</button>`}
+    </div>`};
+  let html='';
+  if(due.length)html+=`<div class="eyebrow" style="margin:6px 0 8px">Due now · ${due.length} — attempt cold, then grade honestly</div>`+due.map(x=>row(x,true)).join('');
+  else if(!miniOnlyDue)html+='<p class="empty">Nothing due today. The amber line is holding. ✓</p>';
+  if(!miniOnlyDue&&later.length)html+=`<div class="eyebrow" style="margin:18px 0 8px">Upcoming</div>`+later.map(x=>row(x,false)).join('');
+  if(miniOnlyDue&&!due.length)html='<p class="empty">Nothing due today. Add something below or open the full scheduler.</p>';
+  host.innerHTML=html;}
+function srForm(mini){const p=mini?'m':'';return `<div class="card"><label class="fld">Concept or problem to lock in</label>
+  <div style="display:flex;gap:8px"><input id="${p}srInput" placeholder="e.g. re-solve the projectile range problem" style="margin:0" onkeydown="if(event.key==='Enter')addSR(${mini})">
+  <button class="btn amber" onclick="addSR(${mini})" style="white-space:nowrap">Schedule</button></div>
+  <p class="muted" style="font-size:.8rem;margin:8px 0 0">When due, attempt it <em>cold</em>, then grade: <strong>Again</strong> resets · <strong>Hard</strong> repeats · <strong>Good</strong> advances · <strong>Easy</strong> jumps ahead. Intervals: ${SR_INT.join(' → ')} days.</p></div>`}
+SEC.scheduler=()=>`
+  <div class="eyebrow">Working tool</div>
+  <h2 class="h-sec">Review scheduler</h2>
+  <p class="lead">Concept-level spaced repetition for what flashcards can't test — whether you can still <em>solve</em> a problem cold. Grade by confidence and the intervals adapt: shaky items come back fast, solid ones drift away.</p>
+  ${srForm(false)}
+  <div id="srList" style="margin-top:18px"></div>`;
+
+/* ============ render engine ============ */
+let current='overview';
+function fillHosts(){
+  document.querySelectorAll('[data-acc="loopworked"]').forEach(h=>h.innerHTML=workedLoop());
+  document.querySelectorAll('[data-tool="errorlog-mini"]').forEach(h=>{h.innerHTML=errorForm(true)+'<div id="mLogList" style="margin-top:10px"></div>'});
+  document.querySelectorAll('[data-tool="scheduler-mini"]').forEach(h=>{h.innerHTML=srForm(true)+'<div id="mSrList" style="margin-top:12px"></div>'});
+  document.querySelectorAll('[data-tool="transfer-mini"]').forEach(h=>{h.innerHTML=transferForm(true)});
+  rerenderTools();
+}
+function rerenderTools(){
+  const ls=document.getElementById('logStats');if(ls)ls.innerHTML=logStats();
+  if(document.getElementById('logList'))renderLogList();
+  const ml=document.getElementById('mLogList');
+  if(ml){const log=getLog().slice(0,3);ml.innerHTML=log.length?log.map(e=>{const m=TYPE_META[e.type];return `<div class="srrow" style="padding:8px 12px"><span class="tg" style="background:${m.c}">${m.label}</span><span class="cn" style="font-size:.9rem">${esc(e.topic)}</span><span class="meta">${fmtDate(e.date)}</span></div>`}).join('')+`<p class="muted" style="font-size:.8rem;margin:8px 0 0">Full log & clusters → <a onclick="go('errorlog')">Error log</a></p>`:'<p class="empty" style="font-size:.85rem">Logged gaps appear here.</p>'}
+  if(document.getElementById('srList'))renderSRList(document.getElementById('srList'),false);
+  if(document.getElementById('mSrList'))renderSRList(document.getElementById('mSrList'),true);
+  if(document.getElementById('tfList'))renderTransferList();
+}
+function buildNav(){
+  document.getElementById('nav').innerHTML=NAV.map(x=>x.grp
+    ?`<div class="grp">${x.grp}</div>`
+    :`<a data-id="${x.id}" onclick="go('${x.id}')"><span class="n">${x.n}</span>${x.t}</a>`).join('');
+}
+function go(id,noscroll){
+  if(!SEC[id])return;current=id;
+  stopSandbox();
+  document.getElementById('content').innerHTML=`<section class="on">${helpBanner(id)}${SEC[id]()}</section>`;
+  document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.id===id));
+  fillHosts();
+  if(id==='test'){feynI=0}
+  if(id==='trigger'){trigIdx=0;trigPicked=new Set();trigDone=false;trigScore={r:0,t:0};renderTrig()}
+  if(id==='miscquiz'){qIdx=0;qDone=false;qPicked=-1;qScore={r:0,t:0};renderQuiz()}
+  if(id==='explorer'){loadEx();renderEx()}
+  if(id==='counterfactual'){cfIdx=0;cfShown=false;renderCF()}
+  if(id==='sandbox'){requestAnimationFrame(startSandbox)}
+  if(window.innerWidth<=860){document.getElementById('side').classList.remove('show');document.getElementById('scrim').classList.remove('show')}
+  if(!noscroll)window.scrollTo({top:0,behavior:'instant'in window?'instant':'auto'});
+  try{history.replaceState(null,'','#'+id)}catch(e){}
+}
+function toggleNav(){document.getElementById('side').classList.toggle('show');document.getElementById('scrim').classList.toggle('show')}
+
+/* ============ init ============ */
+buildNav();
+const start=(location.hash||'').replace('#','');
+go(SEC[start]?start:'dashboard');
+</script>
+</body>
+</html>
