@@ -237,6 +237,47 @@ label.fld{font-size:.78rem;font-weight:500;color:var(--ink-soft);display:block;m
 .cnode:focus{outline:none}
 .cnode:focus rect{stroke:var(--accent);stroke-width:3}
 
+/* ===== v3 component styles ===== */
+.planrow{display:flex;align-items:center;gap:12px;padding:12px 4px;border-top:1px solid var(--line-soft);cursor:pointer;transition:background .12s}
+.planrow:first-child{border-top:0}
+.planrow:hover{background:var(--paper-2)}
+.plan-n{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#1c1300;flex:none;
+  display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk';font-weight:700;font-size:.85rem}
+.planrow .arrow{color:var(--ink-faint)}
+.report p{margin:0 0 12px;line-height:1.6}.report p:last-of-type{margin-bottom:0}
+
+/* contrast table */
+.vs{display:flex;align-items:stretch;margin:14px 0 6px}
+.vs-col{flex:1}
+.vs-h{font-family:'Space Grotesk';font-weight:600;font-size:1.15rem;text-align:center;padding:10px;
+  background:var(--paper-2);border-radius:10px}
+.vs-mid{display:flex;align-items:center;padding:0 14px;color:var(--ink-faint);font-family:'IBM Plex Mono';font-size:.85rem}
+.vs-table{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:10px}
+.vs-row{display:grid;grid-template-columns:1.1fr 1.4fr 1.4fr;border-top:1px solid var(--line-soft);font-size:.9rem}
+.vs-row:first-child{border-top:0}
+.vs-aspect{padding:10px 12px;background:var(--paper-2);font-weight:500;color:var(--ink-soft);font-size:.84rem}
+.vs-a,.vs-b{padding:10px 12px}
+.vs-b{border-left:1px solid var(--line-soft)}
+@media(max-width:560px){.vs-row{grid-template-columns:1fr}.vs-aspect{font-size:.78rem}.vs-b{border-left:0;border-top:1px dashed var(--line-soft)}}
+
+/* onboarding overlay */
+#onboard{display:none;position:fixed;inset:0;z-index:200;background:rgba(16,20,34,.55);backdrop-filter:blur(3px);
+  align-items:center;justify-content:center;padding:20px}
+.onb-card{background:var(--card);border-radius:18px;max-width:520px;width:100%;padding:28px 30px;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:onbIn .3s ease}
+@keyframes onbIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.onb-dots{display:flex;gap:6px;margin-bottom:4px}
+.onb-dots span{width:22px;height:4px;border-radius:3px;background:var(--line)}
+.onb-dots span.on{background:var(--accent)}
+.onb-nav{display:flex;justify-content:space-between;align-items:center;margin-top:18px}
+.setup{background:var(--paper-2);border-radius:12px;padding:14px;margin:4px 0}
+
+/* ===== v4 tutorial styles ===== */
+.tutrow{padding:10px 0;border-top:1px solid var(--line-soft)}
+.tutrow:first-child{border-top:0}
+.tutrow-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:2px}
+.tutwhen{font-family:'IBM Plex Mono';font-size:.7rem;color:var(--accent-deep);background:var(--paper-2);
+  padding:3px 9px;border-radius:6px;white-space:nowrap;border:1px solid var(--line-soft)}
+
 </style>
 </head>
 <body>
@@ -264,8 +305,12 @@ const fmtDate=s=>{if(!s)return'';const d=new Date(s);return d.toLocaleDateString
 
 /* ============ nav structure ============ */
 const NAV=[
+  {grp:'Tutorial'},
+  {id:'tutorial', n:'◆', t:'How to use this app'},
   {grp:'Start here'},
   {id:'dashboard', n:'★', t:'Dashboard'},
+  {id:'plan',      n:'▶', t:"Today's plan"},
+  {id:'welcome',   n:'⚙', t:'Welcome & setup'},
   {grp:'The method'},
   {id:'overview', n:'00', t:'Why this works'},
   {id:'loop',     n:'01', t:'The weekly loop'},
@@ -288,12 +333,13 @@ const NAV=[
   {id:'lens',     n:'10', t:'Daily lens'},
   {grp:'Reference'},
   {id:'misconceptions', n:'11', t:'Misconception fixes'},
-  {id:'analogies',      n:'12', t:'Analogy bank'},
-  {id:'conceptmap',     n:'13', t:'Concept map'},
-  {id:'sims',           n:'14', t:'Code-it challenges'},
+  {id:'contrast',       n:'12', t:'Concept contrasts'},
+  {id:'models',         n:'13', t:'Mental models'},
+  {id:'analogies',      n:'14', t:'Analogy bank'},
+  {id:'conceptmap',     n:'15', t:'Concept map'},
   {grp:'Next'},
-  {id:'alevel',    n:'15', t:'A-level bridge'},
-  {id:'resources', n:'16', t:'Resources'},
+  {id:'alevel',    n:'16', t:'A-level bridge'},
+  {id:'resources', n:'17', t:'Resources'},
 ];
 /* ---- hero signature: spaced-review retention curve, computed ---- */
 function heroSVG(){
@@ -386,11 +432,11 @@ SEC.loop=()=>`
   <div class="loopstep"><div class="num"></div><div><h4>Diagnose — find the gap and its <em>type</em></h4><p>Do a paper section or a recall test. For everything wrong or shaky, log <em>what kind</em> of failure it was. Don't just record the score.</p></div></div>
   <div class="loopstep"><div class="num"></div><div><h4>Repair — rebuild the model, not just the fact</h4><p>For each gap, relearn the <em>mechanism</em> and <em>why the equation has the shape it does</em> — not the bare formula. Kill any misconception at the root.</p></div></div>
   <div class="loopstep"><div class="num"></div><div><h4>Test — prove it from an empty head</h4><p>Active recall + the Feynman pass: explain it aloud in plain words. The exact moment you go vague is the part you don't actually have.</p></div></div>
-  <div class="loopstep"><div class="num"></div><div><h4>Apply — push it somewhere new</h4><p>Solve <em>varied, interleaved</em> problems, then invent 2–3 real-world scenarios the textbook never mentioned. Or simulate one in code.</p></div></div>
+  <div class="loopstep"><div class="num"></div><div><h4>Apply — push it somewhere new</h4><p>Solve <em>varied, interleaved</em> problems, then invent 2–3 real-world scenarios the textbook never mentioned.</p></div></div>
   <div class="loopstep"><div class="num"></div><div><h4>Retain — schedule the comeback</h4><p>Drop the equation into a flashcard deck, and diary the <em>problem</em> for a spaced re-attempt. A concept you can't re-solve cold next month hasn't stuck.</p></div></div>
 </div>
 
-<div class="note"><span class="eyebrow">Use your CS background as leverage</span>You already have the algebra, the graph-reading, and the ability to <strong>code a simulation</strong>. Move fast through the maths-mechanical bits of GCSE and spend the saved time on mechanisms and on the <a onclick="go('sims')">code-it challenges</a> — writing a simulation forces you to state a physical model with zero hand-waving, which is the deepest comprehension check there is.</p>
+<div class="note"><span class="eyebrow">Mechanisms over memorisation</span>GCSE rewards pattern-matching, but the lasting wins come from understanding the <strong>why</strong>. Move briskly through the routine number-plugging and spend the saved time rebuilding mechanisms — that is what holds up at A-level.</p>
 
 <h3 class="blk">A realistic single cycle, start to finish</h3>
 <p>So the abstraction isn't floating, here's one full pass on a single topic so you can see every phase touch the same idea.</p>
@@ -532,8 +578,8 @@ SEC.apply=()=>`
 <div class="note"><span class="eyebrow">Pull a prompt, then capture your answer</span>The <a onclick="go('transfer')">Transfer notebook</a> hands you a real-world scenario for whatever topic you pick and saves your explanation, so you build a personal bank of "I can apply this here" evidence. Get one now:</p>
 <div class="acc-host" data-tool="transfer-mini"></div>
 
-<h3 class="blk">Your unfair advantage: simulate it</h3>
-<p>Writing a simulation forces you to state the physical model with <em>zero</em> ambiguity — you cannot hand-wave to a compiler. It's simultaneously the deepest comprehension check and the best intuition-builder available to you, and it directly serves "apply to all scenarios". You've already built a Monte Carlo engine before; a radioactive-decay simulation is literally the same technique pointed at physics. See the <a onclick="go('sims')">Code-it challenges</a>.</p>
+<h3 class="blk">Predict before you check</h3>
+<p>The strongest application habit is to commit to an outcome <em>before</em> revealing the answer. Use the <a onclick="go('explorer')">equation explorer</a> and <a onclick="go('counterfactual')">counterfactuals</a> for this: state what will happen and why, then test it. A wrong prediction is far more useful than a passively-read correct answer — it shows you exactly where your model is off.</p>
 `;
 
 SEC.retain=()=>`
@@ -654,33 +700,6 @@ const ANA=[
  {topic:'Forces',k:'Density = box of feathers vs box of lead',v:'Same box (volume), wildly different mass. Density is mass per unit volume — it decides floating/sinking (vs the fluid), not how heavy something happens to be overall.'},
 ];
 
-/* ============ DATA: code-it challenges (uses CS background) ============ */
-const SIMS=[
- {lvl:'Warm-up',concept:'Kinematics / SUVAT',t:'Projectile motion',
-  d:'Step a ball through small time-steps under gravity; plot its arc. Vary launch angle and speed. You\'ll feel why 45° maximises range and why horizontal and vertical motion are independent — a thing students memorise but rarely believe until they\'ve coded it.',
-  win:'When you see horizontal velocity stay constant while vertical changes, the "independence of components" clicks permanently.'},
- {lvl:'Warm-up',concept:'Forces / Newton 2',t:'Terminal velocity',
-  d:'Add a drag force proportional to v (or v²) opposing motion. Watch acceleration fall to zero as drag grows to match weight. The object stops speeding up without any "limit" hard-coded — it emerges.',
-  win:'Terminal velocity stops being a definition to recall and becomes an obvious consequence of forces balancing.'},
- {lvl:'Core',concept:'SHM / energy',t:'Pendulum or mass-on-spring',
-  d:'Simulate restoring force F = −kx. Plot displacement, velocity, and the kinetic/potential energy trade-off over time. Watch energy slosh between stores while the total stays flat (until you add damping).',
-  win:'You see conservation of energy as a live, moving thing — and damping shows you exactly where energy "goes".'},
- {lvl:'Core',concept:'Waves / superposition',t:'Two-wave interference',
-  d:'Add two sine waves and plot the sum. Slide their phase and frequency. Constructive and destructive interference, beats, and standing waves all appear from one + operation.',
-  win:'Superposition becomes literally "just add the displacements" — the whole topic collapses into one line of code.'},
- {lvl:'Core',concept:'Electricity',t:'Series/parallel circuit solver',
-  d:'Given resistor values and a supply voltage, compute current everywhere. Print current at each point so you can SEE it\'s identical in series and splits in parallel. Kills the "current used up" model dead.',
-  win:'Watching the same current value print at every series node retires the consumed-current misconception for good.'},
- {lvl:'Stretch',concept:'Radioactivity',t:'Decay — Monte Carlo',
-  d:'You\'ve built Monte Carlo before. Point it here: N nuclei, each with a fixed decay probability per step. Count survivors over time; overlay the exponential N = N₀e^(−λt). Watch the random simulation hug the smooth law as N grows.',
-  win:'The bridge from "random per atom" to "predictable half-life" becomes something you generated, not something you were told.'},
- {lvl:'Stretch',concept:'Fields / gravity',t:'N-body orbit',
-  d:'Two or three masses under mutual gravity, F = Gm₁m₂/r². Integrate and watch orbits form, decay, or fling apart. Inverse-square gets intuitive when you can break orbits by tweaking one number.',
-  win:'Inverse-square law and orbital mechanics move from formula to felt behaviour you can perturb and break.'},
- {lvl:'Stretch',concept:'Thermal / RC',t:'Capacitor discharge',
-  d:'Model an RC circuit discharging: dQ/dt = −Q/RC. Plot the exponential decay; vary R and C to change the time constant. Same exponential shape as radioactive decay — notice the pattern repeating across physics.',
-  win:'You start seeing the same exponential everywhere (decay, discharge, cooling) — a structural insight worth more than any single fact.'},
-];
 /* ============ render: reference banks ============ */
 SEC.misconceptions=()=>{
   const topics=[...new Set(MIS.map(m=>m.topic))];
@@ -730,40 +749,14 @@ SEC.analogies=()=>{
   <div class="grid" id="anaList" style="grid-template-columns:1fr 1fr">${cards}</div>`;
 };
 
-SEC.sims=()=>{
-  const order={'Warm-up':0,'Core':1,'Stretch':2};
-  const lvlColor={'Warm-up':'var(--t-slip)','Core':'var(--accent-deep)','Stretch':'var(--t-comp)'};
-  const items=[...SIMS].sort((a,b)=>order[a.lvl]-order[b.lvl]).map(s=>`
-    <div class="acc">
-      <button onclick="toggleAcc(this)">
-        <span>${s.t}</span>
-        <span style="display:flex;gap:8px;align-items:center">
-          <span class="tag" style="background:${lvlColor[s.lvl]}">${s.lvl}</span>
-          <span class="tag" style="background:var(--ink-soft)">${s.concept}</span>
-          <span class="arrow">›</span>
-        </span>
-      </button>
-      <div class="body">
-        <p style="margin-top:12px">${s.d}</p>
-        <div class="note" style="margin:8px 0 14px"><span class="eyebrow">The moment it clicks</span>${s.win}</div>
-      </div>
-    </div>`).join('');
-  return `
-  <div class="eyebrow">Reference bank · 12</div>
-  <h2 class="h-sec">Code-it challenges</h2>
-  <p class="lead">Your sharpest tool, because a simulation can't be hand-waved. Each one forces you to state a physical model precisely enough for a machine to run it — which is the same as understanding it. Roughly easiest-first. Pick whichever maps to what you're repairing.</p>
-  <div class="note"><span class="eyebrow">Why this beats more past papers for you</span>You're a CS student who's already written a Monte Carlo engine. A physics simulation is comprehension, application, and intuition-building in one artefact — and it carries straight into A-level, where the maths becomes load-bearing.</p>
-  ${items}`;
-};
-
 SEC.alevel=()=>`
   <div class="eyebrow">Phase next · 13</div>
   <h2 class="h-sec">The A-level bridge</h2>
-  <p class="lead">Once GCSE diagnostics come back clean — meaning correct <em>models</em>, not just passing marks — switch to learning concept-by-concept. Two things change, and both suit how you already like to learn.</p>
+  <p class="lead">Once GCSE diagnostics come back clean — meaning correct <em>models</em>, not just passing marks — switch to learning concept-by-concept. Two things change.</p>
 
   <h3 class="blk">What's different about A-level</h3>
   <ul class="clean">
-    <li><strong>The maths becomes load-bearing, not decorative.</strong> Calculus shows up everywhere (rates of change, areas under graphs as real quantities). Your CS background turns this from a barrier into an advantage — lean in.</li>
+    <li><strong>The maths becomes load-bearing, not decorative.</strong> Calculus shows up everywhere — rates of change, and areas under graphs as real physical quantities.</li>
     <li><strong>It genuinely rewards deriving from first principles</strong> in a way GCSE doesn't. The "justify the equation's shape" habit from Repair stops being optional and becomes the main event.</li>
     <li><strong>Topics interlink hard.</strong> Energy threads through mechanics, fields, and thermal physics; the same exponential appears in capacitors and radioactivity. Isolated-topic study quietly fails here.</li>
   </ul>
@@ -780,7 +773,7 @@ SEC.alevel=()=>`
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ SHM ── oscillations ──┤<br>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ energy in fields (gravitational · electric)
   </div>
-  <p class="muted">The same five-phase loop runs unchanged — only now "Repair" leans harder on derivation, and the <a onclick="go('sims')">simulations</a> become genuinely powerful study tools rather than warm-ups.</p>
+  <p class="muted">The same five-phase loop runs unchanged — only now "Repair" leans harder on derivation and first-principles reasoning, and the <a onclick="go('conceptmap')">concept map</a> becomes essential for keeping topics in dependency order.</p>
 
   <div class="note"><span class="eyebrow">Don't rush the switch</span>The temptation is to leave GCSE the moment the marks are fine. Resist it until the <em>models</em> are clean — a buried misconception costs ten times more to fix once it's load-bearing under A-level material.</p>
 `;
@@ -793,7 +786,6 @@ SEC.resources=()=>`
     <div class="card"><h4 style="margin:0 0 6px">Isaac Physics</h4><p style="margin:0;font-size:.92rem;color:var(--ink-soft)">Run by Cambridge, free, spans GCSE → university. Built for problem-solving <em>depth</em> rather than exam-cramming. Make this your backbone for the Apply phase.</p></div>
     <div class="card"><h4 style="margin:0 0 6px">Physics &amp; Maths Tutor</h4><p style="margin:0;font-size:.92rem;color:var(--ink-soft)">Past papers and mark schemes organised by board and by topic. Your raw material for the Diagnose phase.</p></div>
     <div class="card"><h4 style="margin:0 0 6px">Anki</h4><p style="margin:0;font-size:.92rem;color:var(--ink-soft)">For the fact/equation layer of Retain. Pairs with the concept-level <a onclick="go('scheduler')">scheduler</a> here — cards for facts, scheduler for problems.</p></div>
-    <div class="card"><h4 style="margin:0 0 6px">A code editor</h4><p style="margin:0;font-size:.92rem;color:var(--ink-soft)">Your real edge. Python + matplotlib is plenty for every <a onclick="go('sims')">code-it challenge</a>. Treat each simulation as a comprehension exam you set yourself.</p></div>
   </div>
   <div class="note"><span class="eyebrow">One housekeeping note</span>Confirm your exam board before downloading papers (AQA, Edexcel, OCR). For a pure diagnostic it barely matters — the core physics is shared — but match the board once you're drilling exam technique.</p>
   <div class="divider"></div>
@@ -1019,7 +1011,7 @@ function workedLoop(){
    ['02','◆ diagnose','var(--t-concept)','You drop a "heavier falls faster" question and get it wrong — you said the 5 kg ball lands before the 1 kg ball. Logged not as "wrong" but as a <strong>conceptual error</strong>: your actual model is that gravity drags heavy things down quicker.'],
    ['03','◆ repair','var(--t-concept)','You rebuild the model: gravity <em>does</em> pull harder on more mass, but there\'s proportionally more mass to shift, so a = F/m comes out identical. You anchor it with the Moon hammer-and-feather drop. You write the tell: "vacuum / ignore air resistance ⇒ weight irrelevant to acceleration."'],
    ['04','◆ test','var(--accent-deep)','You shut the page and Feynman it aloud: "Both fall at the same rate because…" — and you make it to the end without going vague. If you\'d stalled, back to Repair.'],
-   ['05','◆ apply','var(--t-slip)','Transfer: why <em>does</em> a feather lose on Earth? (air resistance, not weight). Then you code the <a onclick="go(\'sims\')">terminal-velocity sim</a> and watch a heavy and light object diverge only once drag is switched on — proof you generated yourself.'],
+   ['05','◆ apply','var(--t-slip)','Transfer: why <em>does</em> a feather lose on Earth? (air resistance, not weight). Then open the <a onclick="go(\'sandbox\')">sandbox</a>, set drag to zero and watch a heavy and light object fall together — then add drag and watch them diverge.'],
    ['06','◆ retain','var(--t-comp)','Equation card (W = m g) into Anki; the <em>problem</em> ("explain the vacuum drop") into the <a onclick="go(\'scheduler\')">scheduler</a> for re-attempt in 3 days. Next month you can still produce it cold — it stuck.'],
   ];
   return steps.map(s=>`<div class="acc open"><button onclick="toggleAcc(this)"><span><span class="mono" style="color:${s[2]}">${s[0]}</span>&nbsp; ${s[1]}</span><span class="arrow">›</span></button><div class="body"><p style="margin:12px 0 14px">${s[3]}</p></div></div>`).join('');
@@ -1055,7 +1047,7 @@ const HELP={
  diagnose:{what:'Turn wrong answers into sorted, fixable information.',how:['After a paper, classify every miss by failure type.','Log it below — patterns appear after a couple of papers.','Don\'t fix anything yet; diagnose the whole section first.']},
  repair:{what:'Rebuild the broken model, not just the missing fact.',how:['For each gap, relearn the mechanism and why the equation has its shape.','Use the misconception bank for conceptual errors.','Fill the repair worktable in your notes.']},
  test:{what:'Prove you own it by producing it from an empty head.',how:['Blank-page the concept and derivation.','Do the Feynman pass — explain aloud, no jargon.','Where you go vague is the gap; send it back to Repair.']},
- apply:{what:'Make concepts work outside exam questions.',how:['Interleave mixed problems so you practise choosing the model.','Invent real-world scenarios, or pull one from the Transfer notebook.','Best of all: simulate it in code.']},
+ apply:{what:'Make concepts work outside exam questions.',how:['Interleave mixed problems so you practise choosing the model.','Invent real-world scenarios, or pull one from the Transfer notebook.','Predict outcomes before checking — use the explorer and counterfactuals.']},
  retain:{what:'Schedule the comebacks so knowledge survives the month.',how:['Facts → flashcards. Problems → the scheduler.','Review when due, grading yourself honestly.','Keep reviews mixed across topics.']},
  errorlog:{what:'Every gap, sorted by type, in one place.',how:['Log type, topic, and what you actually believed.','Watch the cluster counts — they tell you what kind of work to do.','Filter by type to drill a single weakness.']},
  scheduler:{what:'Concept-level spaced repetition for things flashcards can\'t test.',how:['Add a concept or whole problem to re-solve.','When due, attempt it cold, then grade Again / Hard / Good / Easy.','Honest grading is the whole point — recognising ≠ recalling.']},
@@ -1069,8 +1061,7 @@ const HELP={
  conceptmap:{what:'The A-level mechanics dependency tree — what must be solid before what.',how:['Click any node for its core intuition, the A-level shift, and the trap to kill.','Weak topics from your error log are ringed — fix roots before branches.','Never climb a tier until the one above is ironclad.']},
  misconceptions:{what:'A reference of broken models, each with the analogy that dislodges it.',how:['Filter by topic.','When Diagnose flags a conceptual error, find it here.','Read the tell so you recognise the trap next time.']},
  analogies:{what:'Load-bearing analogies you can run forward to predict behaviour.',how:['Filter by topic.','Reach for these in Repair and when inventing transfer scenarios.','Try writing your own — it\'s a strong test.']},
- sims:{what:'Coding challenges that force precise physical models.',how:['Pick one that matches what you\'re repairing.','Build it; the bug you can\'t fix is the physics you don\'t understand.','Start easy, climb to the stretch builds.']},
- alevel:{what:'How the method changes when you move up to A-level.',how:['Switch only when your GCSE models are clean, not just your marks.','Lean on derivation and the concept map.','Treat simulations as real study tools now.']},
+ alevel:{what:'How the method changes when you move up to A-level.',how:['Switch only when your GCSE models are clean, not just your marks.','Lean on derivation and first principles.','Use the concept map to keep topics in dependency order.']},
  resources:{what:'A short backbone of external tools.',how:['Isaac Physics for depth, PMT for papers.','Anki for facts, the scheduler here for problems.','Confirm your exam board before drilling technique.']},
 };
 function helpBanner(id){
@@ -1558,7 +1549,6 @@ function selNode(id){selectedNode=id;const svgHost=document.getElementById('cmSv
     ${weak?`<div class="warn" style="margin:0 0 12px"><span class="eyebrow" style="color:var(--t-concept)">Flagged weak</span>Your error log shows conceptual or trigger gaps in this area. Repair it before relying on anything below it in the tree.</div>`:''}
     <p style="margin:0 0 8px"><strong>Core intuition.</strong> ${n.intuition}</p>
     <p style="margin:0 0 8px"><strong>The A-level shift.</strong> ${n.shift}</p>
-    <p style="margin:0 0 8px"><strong>CS leverage.</strong> ${n.cs}</p>
     <p style="margin:0 0 8px"><span class="tg" style="background:var(--t-concept)">TRAP TO KILL</span> ${n.trap}</p>
     <p style="margin:0;font-size:.86rem;color:var(--ink-faint)"><strong>Depends on:</strong> ${prereqLabels||'nothing — this is a foundation'}</p>
   </div>`;
@@ -1673,6 +1663,1100 @@ SEC.scheduler=()=>`
   ${srForm(false)}
   <div id="srList" style="margin-top:18px"></div>`;
 
+/* ====================================================================
+   VERSION 3 — TUTOR INTELLIGENCE LAYER
+   Onboarding · study plan · written diagnosis · concept contrasts ·
+   mental-model pages · memory-strength · root-cause hints
+   ==================================================================== */
+
+/* ---- learner profile (light setup, never blocks use) ---- */
+function getProfile(){return store.get('profile',{level:null,goal:null})}
+function setProfile(k,v){const p=getProfile();p[k]=v;store.set('profile',p)}
+
+/* ---- memory-strength labels (more intuitive than %) ---- */
+const STRENGTH=[{l:'New',c:'var(--ink-faint)'},{l:'Weak',c:'var(--t-concept)'},{l:'Stable',c:'var(--accent-deep)'},{l:'Strong',c:'var(--t-slip)'},{l:'Automatic',c:'var(--t-slip)'},{l:'Automatic',c:'var(--t-slip)'}];
+function strengthFor(idx){return STRENGTH[Math.min(idx,STRENGTH.length-1)]}
+
+/* ---- root-cause: map a weak topic to its prerequisite foundations ---- */
+function rootCauseFor(topic){const t=(topic||'').toLowerCase();
+  const node=NODES.find(n=>n.kw.some(k=>t.includes(k)));
+  if(!node||!node.prereq.length)return null;
+  return node.prereq.map(p=>NODES.find(x=>x.id===p).label.replace(/\n/g,' '));}
+
+/* ---- HELP additions for new pages ---- */
+HELP.plan={what:'Your tutor\'s plan for today — what to do, in what order, and why.',
+  how:['Work top to bottom; each block links straight to the tool.','Read the prescription — it tells you what to do AND what to avoid.','Check the written diagnosis to see what\'s really holding you back.']};
+HELP.contrast={what:'Side-by-side pages for the concept pairs students mix up constantly.',
+  how:['Pick a pair.','Read the two columns together — the meaning is in the difference.','Memorise the "tell" so you never confuse them in an exam.']};
+HELP.models={what:'Deep mental-model pages: the correct model, the wrong ones, and where each model stops working.',
+  how:['Open a concept.','Read the model, then the predictions it makes.','Pay attention to the boundaries — knowing where a model breaks is real understanding.']};
+
+/* ====================== STUDY PLAN / PRESCRIPTION / DIAGNOSIS ====================== */
+const PRESCRIPTION={
+ recall:{dx:'Recall gap — facts and equations aren\'t sticking',
+   doIt:['Make flashcards for each missing fact','Add the trickier ones to the scheduler','Quick daily retrieval until they\'re automatic'],
+   avoid:'Avoid grinding full problem sets — the bottleneck is memory, not method.'},
+ trigger:{dx:'Trigger gap — you know the tools but miss the cue to use them',
+   doIt:['Do interleaved, mixed-topic problems','Run the trigger trainer','Force yourself to name the model before any maths'],
+   avoid:'Avoid blocked single-topic drilling — it hides the very skill you\'re missing.'},
+ concept:{dx:'Conceptual error — a broken mental model is firing',
+   doIt:['Stop doing problems for now','Rebuild the model in Repair + the misconception check','Explain it aloud (Feynman) before returning to practice'],
+   avoid:'Avoid more practice questions — you\'ll just reinforce the broken model.'},
+ slip:{dx:'Slips — the physics is right, the execution isn\'t',
+   doIt:['Build a fixed pre-flight checklist: units → equation → substitute → check','Slow down on the final lines','Re-mark your own work hunting only for careless errors'],
+   avoid:'Avoid blaming "silly mistakes" — treat them as a process to fix, not bad luck.'},
+ comp:{dx:'Comprehension — you\'re losing marks decoding the question',
+   doIt:['Drill command words: state / describe / explain / evaluate','Annotate key terms before answering','Rephrase each question in your own words first'],
+   avoid:'Avoid diving into calculation before you\'re sure what\'s being asked.'},
+};
+function dominantType(){const tc=typeCounts();const e=Object.entries(tc).sort((a,b)=>b[1]-a[1])[0];return e&&e[1]>0?e[0]:null}
+function forgettingForecast(){const list=getSR();const today=new Date();const horizon=new Date();horizon.setDate(today.getDate()+4);
+  const h=horizon.toISOString().slice(0,10);const t=todayISO();
+  return list.filter(x=>x.due>t&&x.due<=h).sort((a,b)=>a.due.localeCompare(b.due));}
+function todayPlan(){
+  const blocks=[];const due=dueCount();const dom=dominantType();const log=getLog();const res=resurrectable();
+  if(due>0)blocks.push({m:10,t:`Clear ${due} due review${due>1?'s':''}`,d:'Overdue retrieval decays fastest — always first.',to:'scheduler'});
+  if(res.length)blocks.push({m:5,t:'Revisit one 30-day-old mistake',d:'The real test of learning: can you still solve it cold?',to:'dashboard'});
+  if(!log.length){blocks.push({m:20,t:'Log a diagnostic paper section',d:'Sort every miss by failure type so the app can start coaching you.',to:'diagnose'});}
+  else if(dom==='concept')blocks.push({m:15,t:'Hunt a misconception',d:'Your dominant gap is a broken model. Rebuild it actively.',to:'miscquiz'});
+  else if(dom==='trigger')blocks.push({m:15,t:'Trigger recognition drills',d:'Train spotting which model a situation needs.',to:'trigger'});
+  else if(dom==='recall')blocks.push({m:10,t:'Schedule & recall weak facts',d:'Push the missing facts into spaced retrieval.',to:'scheduler'});
+  else if(dom==='slip')blocks.push({m:10,t:'Re-mark for slips, build a checklist',d:'Fix execution, not theory.',to:'diagnose'});
+  else if(dom==='comp')blocks.push({m:10,t:'Command-word & vocabulary drill',d:'Make the questions decode instantly.',to:'misconceptions'});
+  else blocks.push({m:15,t:'Pick any practice module',d:'No dominant weakness yet — generate some signal.',to:'trigger'});
+  blocks.push({m:10,t:'One application or counterfactual',d:'Use a concept outside an exam question — that\'s where understanding shows.',to:'counterfactual'});
+  blocks.push({m:5,t:'Daily lens — explain one real thing',d:'Keep the transfer habit and the streak alive.',to:'lens'});
+  return blocks;
+}
+function buildReport(){
+  const log=getLog();const streak=currentStreak();const dom=dominantType();
+  const sr=getSR();const tn=getTransfer().length;const due=dueCount();const lens=getLens().length;
+  const out=[];
+  out.push(streak>=3?`You're on a ${streak}-day streak — consistency is the single biggest predictor of retention, and you've got it.`:
+    streak>0?`You've been active ${streak} day${streak>1?'s':''} running. Aim for a steady daily rhythm — little and often beats cramming.`:
+    `No active streak right now. The most valuable thing you can do is show up briefly every day, even for ten minutes.`);
+  if(!log.length){out.push('There isn\'t enough logged data yet to diagnose your weaknesses. Do one paper section, sort the misses by failure type in the error log, and this report will sharpen immediately.');return out;}
+  const tc=typeCounts();const total=Object.values(tc).reduce((a,b)=>a+b,0);
+  out.push(`You've logged ${total} gap${total>1?'s':''}. Your dominant failure type is ${TYPE_META[dom].label.toLowerCase()} — ${PRESCRIPTION[dom].dx.split('—')[1].trim()}. ${clusterAdvice(dom)}`);
+  // balance review vs application
+  if(sr.length>=3&&tn===0)out.push('You\'re building review habits but haven\'t saved a single transfer scenario. Retention without application is fragile — spend more time using concepts in real-world situations.');
+  else if(tn>=3&&sr.length===0)out.push('You\'re strong on application but nothing is in spaced review. You risk forgetting solid ideas — schedule a few problems so they survive the month.');
+  else if(sr.length||tn)out.push(`Your mix looks reasonable: ${sr.length} item${sr.length===1?'':'s'} in spaced review and ${tn} transfer note${tn===1?'':'s'}. Keep both moving.`);
+  // forecast
+  const f=forgettingForecast();
+  if(f.length)out.push(`Heads-up: ${f.length} item${f.length>1?'s are':' is'} about to fall due (${f.slice(0,3).map(x=>x.concept).join('; ')}${f.length>3?'…':''}). Catching them just before you\'d forget is exactly when review pays off most.`);
+  if(due>0)out.push(`You have ${due} review${due>1?'s':''} due right now. Clear those before learning anything new.`);
+  return out;
+}
+SEC.plan=()=>{
+  const blocks=todayPlan();const total=blocks.reduce((a,b)=>a+b.m,0);const dom=dominantType();
+  const rx=dom?PRESCRIPTION[dom]:null;const report=buildReport();const f=forgettingForecast();const p=getProfile();
+  return `
+  <div class="eyebrow">Start here · your tutor</div>
+  <h2 class="h-sec">Today's plan</h2>
+  <p class="lead">${p.goal?`Goal: <strong>${esc(p.goal)}</strong>${p.level?` · ${esc(p.level)}`:''}. `:''}A real tutor never makes you decide what to study. This page reads your data and lays out today's session — in order, time-boxed, each block one tap from the right tool.</p>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+      <div class="eyebrow">Today's session</div><span class="mono" style="font-size:.78rem;color:var(--ink-faint)">≈ ${total} min</span></div>
+    ${blocks.map((b,i)=>`<div class="planrow" onclick="go('${b.to}')">
+      <span class="plan-n">${i+1}</span>
+      <div style="flex:1"><div style="font-weight:600">${b.t} <span class="mono" style="font-size:.72rem;color:var(--ink-faint)">· ${b.m} min</span></div>
+        <div class="muted" style="font-size:.85rem">${b.d}</div></div>
+      <span class="arrow">›</span></div>`).join('')}
+  </div>
+
+  ${rx?`<h3 class="blk">Your learning prescription</h3>
+  <div class="card" style="border-left:3px solid ${TYPE_META[dom].c}">
+    <p style="margin:0 0 10px"><span class="tg" style="background:${TYPE_META[dom].c}">DIAGNOSIS</span> ${rx.dx}.</p>
+    <div class="eyebrow" style="margin-bottom:4px">Prescription — do this</div>
+    <ul class="clean" style="margin:0 0 10px">${rx.doIt.map(x=>`<li>${x}</li>`).join('')}</ul>
+    <p style="margin:0;color:var(--t-concept);font-size:.9rem"><strong>Don't:</strong> ${rx.avoid.replace(/^Avoid /,'')}</p>
+  </div>`:''}
+
+  ${f.length?`<h3 class="blk">Forgetting forecast</h3>
+  <p class="muted" style="margin-top:-4px">Likely to fade within four days unless reviewed — the highest-value moment to retrieve them.</p>
+  <div class="card">${f.slice(0,6).map(x=>{const s=strengthFor(x.idx);return `<div class="srrow" style="padding:9px 12px">
+    <span class="dot" style="background:var(--rest)"></span><span class="cn">${esc(x.concept)}</span>
+    <span class="tg" style="background:${s.c}">${s.l}</span>
+    <span class="meta">due ${fmtDate(x.due)}</span></div>`}).join('')}</div>`:''}
+
+  <h3 class="blk">Your tutor's diagnosis</h3>
+  <div class="card report">${report.map(p=>`<p>${p}</p>`).join('')}
+    <p class="muted" style="font-size:.82rem;margin:10px 0 0">This updates every time you log, review, or practise. The more honest your inputs, the sharper the diagnosis.</p></div>`;
+};
+/* ====================== CONCEPT CONTRASTS ====================== */
+const CONTRAST=[
+ {a:'Mass',b:'Weight',topic:'Forces',
+  rows:[['What it is','Amount of matter in an object','The force of gravity on that mass'],
+        ['Unit','kilograms (kg)','newtons (N)'],
+        ['Changes with location?','No — same on Earth, Moon, deep space','Yes — W = m·g, so it scales with gravity'],
+        ['Measured by','a balance (compares masses)','a scale / force-meter (measures pull)']],
+  confusion:'Everyday speech uses "weight" for what physics calls mass ("I weigh 70 kg" is really a mass).',
+  tell:'Units give it away: kg → mass, N → weight. If the planet changes, weight changes and mass stays put.'},
+ {a:'Speed',b:'Velocity',topic:'Motion',
+  rows:[['Type','Scalar — size only','Vector — size AND direction'],
+        ['Example','30 m/s','30 m/s due north'],
+        ['Can it change at constant size?','No','Yes — turning a corner changes velocity though speed is constant'],
+        ['Average over a round trip','Can be large','Can be zero (you end where you started)']],
+  confusion:'They share a unit (m/s) and feel identical until direction matters.',
+  tell:'If direction is part of the answer, it\'s velocity. A car at constant speed round a bend has changing velocity.'},
+ {a:'Velocity',b:'Acceleration',topic:'Motion',
+  rows:[['What it measures','How fast position changes','How fast velocity changes'],
+        ['Unit','m/s','m/s²'],
+        ['Zero when…','the object is stationary','the velocity is steady (any constant velocity)'],
+        ['On a graph','gradient of a displacement–time graph','gradient of a velocity–time graph']],
+  confusion:'"Accelerating" colloquially means "going fast", but a fast steady cruise has zero acceleration.',
+  tell:'High velocity ≠ acceleration. Acceleration is any change in velocity — speeding up, slowing, or turning.'},
+ {a:'Heat',b:'Temperature',topic:'Particle model',
+  rows:[['What it is','Total thermal energy of all particles','Average kinetic energy per particle'],
+        ['Unit','joules (J)','degrees / kelvin (°C, K)'],
+        ['Depends on amount of stuff?','Yes — more particles, more total energy','No — it\'s a per-particle average'],
+        ['Example','a warm bath holds huge heat','a sparkler has very high temperature']],
+  confusion:'A hotter thing seems like it must contain "more heat", but a tiny very hot object can hold little energy.',
+  tell:'Change the mass or material and you need heat (Q = mcΔT), not temperature. Temperature is per-particle; heat is the total.'},
+ {a:'Current',b:'Voltage',topic:'Electricity',
+  rows:[['What it is','Rate of flow of charge','Energy given per unit charge (the push)'],
+        ['Unit','amperes (A)','volts (V)'],
+        ['Measured…','in series (ammeter in the line)','across a component (voltmeter in parallel)'],
+        ['Water analogy','the flow rate of water','the pressure / height driving it']],
+  confusion:'Both are "electrical" and get lumped together, but one is flow and the other is the push causing it.',
+  tell:'Current flows through; voltage is across. I = V/R links them: push divided by opposition gives flow.'},
+ {a:'Energy',b:'Power',topic:'Energy',
+  rows:[['What it is','Capacity to do work','Rate of transferring energy'],
+        ['Unit','joules (J)','watts (W) = joules per second'],
+        ['Question it answers','how much work in total?','how fast is it being done?'],
+        ['Example','lifting a box stores GPE','two cranes lift the same box — the faster one is more powerful']],
+  confusion:'A "powerful" battery often just means high energy; physics keeps the two strictly separate.',
+  tell:'Power = energy ÷ time. Same energy in less time means more power. Watts are joules per second.'},
+];
+let contIdx=0;
+function renderContrast(){const host=document.getElementById('contBox');if(!host)return;const c=CONTRAST[contIdx];
+  host.innerHTML=`
+    <div class="segwrap" style="margin-bottom:16px">${CONTRAST.map((x,i)=>`<button class="seg ${i===contIdx?'on':''}" onclick="contIdx=${i};renderContrast()">${x.a} vs ${x.b}</button>`).join('')}</div>
+    <span class="tag" style="background:var(--ink-soft)">${c.topic}</span>
+    <div class="vs">
+      <div class="vs-col"><div class="vs-h">${c.a}</div></div>
+      <div class="vs-mid">vs</div>
+      <div class="vs-col"><div class="vs-h">${c.b}</div></div>
+    </div>
+    <div class="vs-table">${c.rows.map(r=>`<div class="vs-row">
+      <div class="vs-aspect">${r[0]}</div><div class="vs-a">${r[1]}</div><div class="vs-b">${r[2]}</div></div>`).join('')}</div>
+    <div class="warn" style="margin:14px 0 0"><span class="eyebrow" style="color:var(--t-concept)">Why they get confused</span>${c.confusion}</div>
+    <div class="note" style="margin:10px 0 0"><span class="eyebrow">The tell</span>${c.tell}</div>`;
+}
+SEC.contrast=()=>`
+  <div class="eyebrow">Reference · contrasts</div>
+  <h2 class="h-sec">Concept contrasts</h2>
+  <p class="lead">Half of physics mistakes are really two ideas getting blurred together. You understand a concept best by seeing exactly how it differs from the one next to it. Read each pair as a unit.</p>
+  <div class="card" id="contBox"></div>`;
+
+/* ====================== MENTAL MODEL PAGES ====================== */
+const MODELS=[
+ {c:'Newton\'s first law (inertia)',topic:'Forces',
+  model:'Things naturally keep doing what they\'re doing. With zero resultant force, a still object stays still and a moving object keeps moving in a straight line at constant speed — forever.',
+  wrong:['Moving objects need a constant force to keep going.','When the push "runs out", things stop on their own.'],
+  predict:['Slide a puck on frictionless ice — it never slows.','In deep space a probe coasts for centuries with engines off.','A tablecloth yanked fast leaves the plates put — their inertia resists the sudden pull.'],
+  bound:['Inside an accelerating frame (a braking car) you feel "phantom" forces — the law needs an inertial frame.','At everyday scales it\'s exact; near light-speed you need relativity.'],
+  ex:['A passenger lurches forward when a bus brakes.','Seatbelts exist precisely because your body keeps moving when the car stops.']},
+ {c:'Current in a circuit',topic:'Electricity',
+  model:'Charge circulates a complete loop like a conveyor belt; the cell does work on it, components take energy out. The same current passes every point in a series loop — charge is conserved.',
+  wrong:['Current gets "used up" as it passes through a bulb.','There\'s less current after a component than before it.'],
+  predict:['An ammeter reads the same before and after a series bulb.','Add a second series bulb: total resistance rises, so current falls everywhere equally and both dim.','Break the loop anywhere and all current stops instantly.'],
+  bound:['It\'s energy, not charge, that\'s consumed.','The simple "same current" picture is for a single series loop; parallel branches split the current.'],
+  ex:['Fairy lights in series all dim together.','A short circuit draws huge current because resistance collapses.']},
+ {c:'Conservation of energy',topic:'Energy',
+  model:'Energy is never created or destroyed, only moved between stores (kinetic, gravitational, elastic, thermal, chemical…). "Lost" energy has actually spread out as thermal energy, usually via friction or drag.',
+  wrong:['Energy gets "used up" and disappears.','A machine can be 100% efficient, or create energy.'],
+  predict:['A bouncing ball returns lower each time — the missing energy became heat and sound.','A pendulum trades height for speed and back, total energy flat (until friction).','Regenerative brakes recover kinetic energy instead of dumping it as heat.'],
+  bound:['Energy is conserved overall, but useful energy always degrades (second law).','Mass itself is an energy store at extreme scales (E = mc²).'],
+  ex:['A phone charger warms up — wasted electrical energy as heat.','Friction brakes turn motion into hot discs.']},
+ {c:'Gravity & free fall',topic:'Forces',
+  model:'Gravity gives every object the same acceleration g regardless of mass, because more mass means more force AND more inertia, which cancel (a = F/m). Apparent "weightlessness" is just falling freely.',
+  wrong:['Heavier objects fall faster.','There\'s no gravity in space / orbit.'],
+  predict:['In a vacuum a feather and a hammer land together.','Astronauts float because they and the station fall together (orbit), not because gravity is absent.','Double an object\'s mass and its fall time is unchanged.'],
+  bound:['On Earth, air resistance breaks the "same rate" rule — that\'s why feathers lose.','g varies slightly with altitude and location.'],
+  ex:['The Apollo 15 hammer-and-feather drop.','A dropped lift would make you briefly weightless inside it.']},
+ {c:'Pressure',topic:'Pressure',
+  model:'Pressure is force spread over an area: P = F/A. The same force concentrated on a tiny area gives huge pressure; spread over a large area, very little. Gas pressure is countless particle impacts per second.',
+  wrong:['A vacuum "sucks" things in.','Pressure is the same as force.'],
+  predict:['A stiletto heel dents a floor a flat shoe won\'t — same weight, far smaller area.','A drinking straw works because atmospheric pressure pushes the drink up, not suction.','Heating a sealed gas raises its pressure as particles hit the walls harder.'],
+  bound:['"Suction" is always higher pressure pushing from the other side.','In liquids, pressure also grows with depth (ρgh).'],
+  ex:['Snowshoes spread weight to stop you sinking.','A pressure cooker raises boiling point by raising pressure.']},
+ {c:'Waves',topic:'Waves',
+  model:'A wave transfers energy without transferring matter — the medium oscillates in place while the pattern travels. Transverse waves oscillate across the direction of travel (light, water); longitudinal along it (sound).',
+  wrong:['Waves carry the medium along with them.','Sound and light are basically the same kind of wave.'],
+  predict:['A cork on water bobs up and down as waves pass — it doesn\'t travel with them.','Sound needs a medium, so space is silent; light crosses a vacuum, so space isn\'t dark.','Refraction: a wave bends when it changes speed entering a new medium.'],
+  bound:['Sound can\'t travel through a vacuum; light can.','At very high intensity or small scale, simple wave rules need extending (quantum effects).'],
+  ex:['A stadium Mexican wave — people stay put, the pattern moves.','A straw looks bent where light refracts at the water surface.']},
+];
+function renderModels(){const host=document.getElementById('modelBox');if(!host)return;
+  host.innerHTML=MODELS.map((m,i)=>`<div class="acc">
+    <button onclick="toggleAcc(this)"><span>${m.c}</span>
+      <span style="display:flex;gap:8px;align-items:center"><span class="tag" style="background:var(--ink-soft)">${m.topic}</span><span class="arrow">›</span></span></button>
+    <div class="body"><div style="padding:12px 0 14px">
+      <p style="margin:0 0 12px"><span class="tg" style="background:var(--t-slip)">THE MODEL</span><br>${m.model}</p>
+      <p style="margin:0 0 6px"><span class="tg" style="background:var(--t-concept)">COMMON WRONG MODELS</span></p>
+      <ul class="clean" style="margin:0 0 12px">${m.wrong.map(w=>`<li>${w}</li>`).join('')}</ul>
+      <p style="margin:0 0 6px"><span class="tg" style="background:var(--accent-deep)">WHAT THE MODEL PREDICTS</span></p>
+      <ul class="clean" style="margin:0 0 12px">${m.predict.map(w=>`<li>${w}</li>`).join('')}</ul>
+      <p style="margin:0 0 6px"><span class="tg" style="background:var(--t-trigger)">WHERE IT STOPS WORKING</span></p>
+      <ul class="clean" style="margin:0 0 12px">${m.bound.map(w=>`<li>${w}</li>`).join('')}</ul>
+      <div class="note" style="margin:0"><span class="eyebrow">Seen in the wild</span>${m.ex.join(' · ')}</div>
+    </div></div></div>`).join('');
+}
+SEC.models=()=>`
+  <div class="eyebrow">Reference · understanding</div>
+  <h2 class="h-sec">Mental model pages</h2>
+  <p class="lead">A formula is the surface; the mental model is what's actually happening underneath. Each page gives the correct model, the wrong ones it replaces, the predictions it makes, and — most importantly — the boundary where it stops working. Knowing that edge is real understanding.</p>
+  <div id="modelBox"></div>`;
+/* ====================== ONBOARDING + SETUP WIZARD ====================== */
+HELP.welcome={what:'Set up the app and replay the guided tour any time.',
+  how:['Set your level and goal — it tailors the language and plan.','Replay the walkthrough if you want a refresher.','Then head to Today\'s plan and just follow it.']};
+const ONB=[
+ {h:'Welcome — this is a method, not a textbook',
+  b:'Most apps go <em>content → quiz → score</em>. This one works like a tutor: <strong>diagnose → repair → test → apply → retain</strong>. You bring the physics; it makes sure the learning actually sticks.'},
+ {h:'Quick setup (optional)',
+  b:'Tell it where you\'re aiming so it can tailor the plan. You can skip and change this any time on the Welcome page.',setup:true},
+ {h:'You\'ll never have to guess what to do',
+  b:'Every page has a <span class="help-i" style="position:relative;top:1px">?</span> <strong>How to use this page</strong> banner. And your <strong>Dashboard</strong> and <strong>Today\'s plan</strong> always tell you the single highest-value next step — no decision fatigue.'},
+ {h:'The loop in one line',
+  b:'After a paper: sort misses by <em>type</em> (Diagnose) → rebuild broken models (Repair) → produce it from memory (Test) → use it in the real world (Apply) → schedule the comeback (Retain). Start on the Dashboard whenever you\'re unsure.'},
+];
+let onbStep=0;
+function showOnboard(){onbStep=0;let o=document.getElementById('onboard');if(!o){o=document.createElement('div');o.id='onboard';document.body.appendChild(o);}o.style.display='flex';renderOnboard();}
+function hideOnboard(){const o=document.getElementById('onboard');if(o)o.style.display='none';store.set('onboarded',true);}
+function renderOnboard(){const o=document.getElementById('onboard');if(!o)return;const s=ONB[onbStep];const p=getProfile();
+  const setup=s.setup?`<div class="setup">
+    <div class="eyebrow" style="margin-bottom:6px">Your level</div>
+    <div class="opts" style="flex-direction:row;flex-wrap:wrap">${['GCSE','A-level','University'].map(l=>`<button class="opt ${p.level===l?'sel':''}" style="flex:1;justify-content:center" onclick="onbSet('level','${l}')">${l}</button>`).join('')}</div>
+    <div class="eyebrow" style="margin:14px 0 6px">Your goal</div>
+    <div class="opts" style="flex-direction:row;flex-wrap:wrap">${['Pass','Grade 7','Grade 9 / A*','Deep understanding'].map(g=>`<button class="opt ${p.goal===g?'sel':''}" style="flex:1;justify-content:center;min-width:120px" onclick="onbSet('goal','${g}')">${g}</button>`).join('')}</div>
+  </div>`:'';
+  o.innerHTML=`<div class="onb-card">
+    <div class="onb-dots">${ONB.map((_,i)=>`<span class="${i===onbStep?'on':''}"></span>`).join('')}</div>
+    <h3 style="margin:6px 0 10px;font-size:1.35rem">${s.h}</h3>
+    <p style="color:var(--ink-soft);line-height:1.6;margin:0 0 14px">${s.b}</p>
+    ${setup}
+    <div class="onb-nav">
+      <button class="btn ghost sm" onclick="hideOnboard()">Skip</button>
+      <div style="display:flex;gap:8px">
+        ${onbStep>0?`<button class="btn sm" onclick="onbStep--;renderOnboard()">Back</button>`:''}
+        ${onbStep<ONB.length-1?`<button class="btn amber sm" onclick="onbStep++;renderOnboard()">Next</button>`:`<button class="btn amber sm" onclick="hideOnboard();go('tutorial')">Start learning</button>`}
+      </div>
+    </div></div>`;
+}
+function onbSet(k,v){setProfile(k,v);renderOnboard();}
+SEC.welcome=()=>{const p=getProfile();return `
+  <div class="eyebrow">Start here</div>
+  <h2 class="h-sec">Welcome &amp; setup</h2>
+  <p class="lead">A working method that behaves like a tutor: it diagnoses what's actually wrong, rebuilds the model, and schedules the comeback. Set your target below — it tailors your plan — then let <a onclick="go('plan')">Today's plan</a> drive.</p>
+  <div class="card">
+    <div class="eyebrow" style="margin-bottom:6px">Your level</div>
+    <div class="opts" style="flex-direction:row;flex-wrap:wrap">${['GCSE','A-level','University'].map(l=>`<button class="opt ${p.level===l?'sel':''}" style="flex:1;justify-content:center" onclick="setProfile('level','${l}');go('welcome',true)">${l}</button>`).join('')}</div>
+    <div class="eyebrow" style="margin:16px 0 6px">Your goal</div>
+    <div class="opts" style="flex-direction:row;flex-wrap:wrap">${['Pass','Grade 7','Grade 9 / A*','Deep understanding'].map(g=>`<button class="opt ${p.goal===g?'sel':''}" style="flex:1;justify-content:center;min-width:120px" onclick="setProfile('goal','${g}');go('welcome',true)">${g}</button>`).join('')}</div>
+    ${p.level||p.goal?`<p class="mono" style="font-size:.82rem;color:var(--rest);margin:14px 0 0">✓ Saved${p.level?' · '+esc(p.level):''}${p.goal?' · '+esc(p.goal):''}. Your plan and diagnosis now reflect this.</p>`:''}
+  </div>
+  <div class="card" style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+    <div><strong>Guided walkthrough</strong><div class="muted" style="font-size:.88rem">A 4-step tour of how the method works.</div></div>
+    <button class="btn amber" onclick="showOnboard()">Replay the tour</button>
+  </div>
+  <div class="note" style="margin-top:16px"><span class="eyebrow">The one habit that matters</span>When in doubt, open <a onclick="go('plan')">Today's plan</a> and do the top block. Everything else is optional depth.</p>`;
+};
+
+/* ---- override: scheduler rows show memory-strength label ---- */
+function renderSRList(host,miniOnlyDue){
+  if(!host)return;const list=getSR();const today=todayISO();
+  const due=list.filter(x=>x.due<=today).sort((a,b)=>a.due.localeCompare(b.due));
+  const later=list.filter(x=>x.due>today).sort((a,b)=>a.due.localeCompare(b.due));
+  if(!list.length){host.innerHTML='<p class="empty">Nothing scheduled. Add a concept or whole problem you want to still know in a month.</p>';return}
+  const grades=`<span class="grades">
+     <button class="gbtn again" onclick="reviewSR('$ID','again')" title="Couldn't do it">Again</button>
+     <button class="gbtn hard" onclick="reviewSR('$ID','hard')" title="Got there, hard">Hard</button>
+     <button class="gbtn good" onclick="reviewSR('$ID','good')" title="Solid, cold">Good</button>
+     <button class="gbtn easy" onclick="reviewSR('$ID','easy')" title="Trivial now">Easy</button></span>`;
+  const row=(x,isDue)=>{const over=daysBetween(x.due,today);const s=strengthFor(x.idx);
+    const status=isDue?(over>0?`${over}d overdue`:'due today'):`in ${daysBetween(today,x.due)}d`;
+    return `<div class="srrow">
+      <span class="dot" style="background:${isDue?'var(--due)':'var(--rest)'}"></span>
+      <span class="cn">${esc(x.concept)}</span>
+      <span class="tg" style="background:${s.c}">${s.l}</span>
+      <span class="meta">${status}</span>
+      ${isDue?grades.replace(/\$ID/g,x.id):`<button class="btn sm ghost" onclick="delSR('${x.id}')">✕</button>`}
+    </div>`};
+  let html='';
+  if(due.length)html+=`<div class="eyebrow" style="margin:6px 0 8px">Due now · ${due.length} — attempt cold, then grade honestly</div>`+due.map(x=>row(x,true)).join('');
+  else if(!miniOnlyDue)html+='<p class="empty">Nothing due today. The amber line is holding. ✓</p>';
+  if(!miniOnlyDue&&later.length)html+=`<div class="eyebrow" style="margin:18px 0 8px">Upcoming</div>`+later.map(x=>row(x,false)).join('');
+  if(miniOnlyDue&&!due.length)html='<p class="empty">Nothing due today. Add something below or open the full scheduler.</p>';
+  host.innerHTML=html;}
+
+/* ---- override: report adds root-cause analysis ---- */
+function buildReport(){
+  const log=getLog();const streak=currentStreak();const dom=dominantType();
+  const sr=getSR();const tn=getTransfer().length;const due=dueCount();
+  const out=[];
+  out.push(streak>=3?`You're on a ${streak}-day streak — consistency is the single biggest predictor of retention, and you've got it.`:
+    streak>0?`You've been active ${streak} day${streak>1?'s':''} running. Aim for a steady daily rhythm — little and often beats cramming.`:
+    `No active streak right now. The most valuable thing you can do is show up briefly every day, even for ten minutes.`);
+  if(!log.length){out.push('There isn\'t enough logged data yet to diagnose your weaknesses. Do one paper section, sort the misses by failure type in the error log, and this report will sharpen immediately.');return out;}
+  const tc=typeCounts();const total=Object.values(tc).reduce((a,b)=>a+b,0);
+  out.push(`You've logged ${total} gap${total>1?'s':''}. Your dominant failure type is ${TYPE_META[dom].label.toLowerCase()} — ${clusterAdvice(dom)}`);
+  // root cause from weakest topic
+  const wt=weakTopics();
+  if(wt.length){const rc=rootCauseFor(wt[0].topic);
+    if(rc)out.push(`A root-cause note: your most-logged topic is "${wt[0].topic}", which sits on top of ${rc.join(' and ')}. Weakness there often traces back to those foundations — shore them up first, or the topic above keeps collapsing.`);}
+  if(sr.length>=3&&tn===0)out.push('You\'re building review habits but haven\'t saved a single transfer scenario. Retention without application is fragile — spend more time using concepts in real-world situations.');
+  else if(tn>=3&&sr.length===0)out.push('You\'re strong on application but nothing is in spaced review. You risk forgetting solid ideas — schedule a few problems so they survive the month.');
+  else if(sr.length||tn)out.push(`Your mix looks reasonable: ${sr.length} item${sr.length===1?'':'s'} in spaced review and ${tn} transfer note${tn===1?'':'s'}. Keep both moving.`);
+  const f=forgettingForecast();
+  if(f.length)out.push(`Heads-up: ${f.length} item${f.length>1?'s are':' is'} about to fall due (${f.slice(0,3).map(x=>x.concept).join('; ')}${f.length>3?'…':''}). Catching them just before you'd forget is exactly when review pays off most.`);
+  if(due>0)out.push(`You have ${due} review${due>1?'s':''} due right now. Clear those before learning anything new.`);
+  return out;
+}
+
+/* ---- override: lens gains a random-object generator ---- */
+let lensPick=null;
+function lensObject(){lensPick=LENS[Math.floor(Math.random()*LENS.length)];const el=document.getElementById('lensNudge');if(el)el.innerHTML='Explain the physics of <strong>'+lensPick+'</strong> — or anything else you noticed today.';}
+SEC.lens=()=>{const list=getLens();const doneToday=list.some(x=>x.date===todayISO());const nudge=lensPick||lensToday();
+  return `
+  <div class="eyebrow">Working tool · daily</div>
+  <h2 class="h-sec">Daily physics lens</h2>
+  <p class="lead">Transfer is a habit, not an event. Once a day, explain one ordinary thing you saw using physics. Tiny, but it trains your brain to see mechanisms everywhere — which is the real goal.</p>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center"><div class="eyebrow">Today's nudge</div>
+      <button class="btn ghost sm" onclick="lensObject()">🎲 Random object</button></div>
+    <div class="scenario" id="lensNudge" style="margin:8px 0 12px">Explain the physics of <strong>${nudge}</strong> — or anything else you noticed today.</div>
+    ${doneToday?'<p class="mono" style="color:var(--rest);font-size:.84rem;margin:0 0 10px">✓ Logged today. Add another if you like.</p>':''}
+    <textarea id="lensText" placeholder="What did you notice, and which physics explains it? A sentence or two is plenty."></textarea>
+    <button class="btn amber sm" onclick="saveLens()">Save to journal</button>
+  </div>
+  <h3 class="blk">Your physics-in-the-wild journal</h3>
+  <div id="lensList">${list.length?list.map(x=>`<div class="card" style="margin:10px 0">
+    <span class="meta mono" style="font-size:.7rem;color:var(--ink-faint)">${fmtDate(x.date)} · ${esc(x.prompt)}</span>
+    <p style="margin:8px 0 0;font-size:.93rem">${esc(x.text)}</p>
+    <button class="btn sm ghost" style="margin-top:8px" onclick="delLens('${x.id}')">Remove</button></div>`).join(''):'<p class="empty">Empty. Your first entry starts the journal — and the streak on your dashboard.</p>'}</div>`;
+};
+
+/* ====================================================================
+   VERSION 4 — TUTORIAL SECTION + COMPREHENSIVE GCSE CONTENT EXPANSION
+   Pushes large banks onto MIS / ANA / TRIG / QUIZ / EQS / CF / CONTRAST / MODELS
+   Covers all GCSE physics: Energy, Electricity, Particle model, Atomic &
+   radioactivity, Forces & motion, Waves & light, Magnetism, Space.
+   ==================================================================== */
+
+HELP.tutorial={what:'The starting point — what every section is for, when to use it, and how often.',
+  how:['Read this once before you begin.','Use the cadence table to build a weekly rhythm.','Come back any time you are unsure where a section fits.']};
+
+SEC.tutorial=()=>`
+  <div class="eyebrow">Tutorial · read me first</div>
+  <h2 class="h-sec">How to use this app</h2>
+  <p class="lead">This is a method that behaves like a tutor, not a textbook to read cover to cover. Below is exactly what each section is for, <strong>when</strong> to reach for it, and <strong>how often</strong>. If you only remember one thing: open <a onclick="go('plan')">Today's plan</a> at the start of every session and do the top block.</p>
+
+  <h3 class="blk">The rhythm at a glance</h3>
+  <div class="vs-table" style="margin-top:8px">
+    <div class="vs-row" style="grid-template-columns:1.1fr 2fr"><div class="vs-aspect">Every day · 10–25 min</div><div class="vs-a" style="grid-column:span 2">Open <strong>Today's plan</strong> → clear any due <strong>reviews</strong> → do the one practice module it points to → one <strong>Daily lens</strong> entry.</div></div>
+    <div class="vs-row" style="grid-template-columns:1.1fr 2fr"><div class="vs-aspect">After every past paper</div><div class="vs-a" style="grid-column:span 2">Run the five phases: <strong>Diagnose</strong> (log every miss by type) → <strong>Repair</strong> → <strong>Test</strong> → <strong>Apply</strong> → <strong>Retain</strong> (schedule it).</div></div>
+    <div class="vs-row" style="grid-template-columns:1.1fr 2fr"><div class="vs-aspect">2–3 × per week</div><div class="vs-a" style="grid-column:span 2">A focused <strong>practice</strong> block: trigger trainer, misconception check, equation explorer, or counterfactuals — whichever your weakness points to.</div></div>
+    <div class="vs-row" style="grid-template-columns:1.1fr 2fr"><div class="vs-aspect">Once a week</div><div class="vs-a" style="grid-column:span 2">Read your <strong>tutor's diagnosis</strong> on the plan page, scan the <strong>Dashboard</strong> weakness engine, and review the <strong>Concept map</strong> for what to shore up next.</div></div>
+    <div class="vs-row" style="grid-template-columns:1.1fr 2fr"><div class="vs-aspect">As needed (reference)</div><div class="vs-a" style="grid-column:span 2">Open misconceptions, contrasts, mental models, analogies, or the sandbox the moment a specific gap or confusion appears.</div></div>
+  </div>
+
+  <h3 class="blk">Every section, and when to use it</h3>
+
+  <div class="eyebrow" style="margin:14px 0 6px">Start here</div>
+  ${tutRow('Dashboard','Daily, at a glance','Your state in one screen: streak, what is due, your dominant weakness, and the single best next action. Glance at it whenever you open the app.')}
+  ${tutRow("Today's plan",'Start of every session','The tutor\'s ordered, time-boxed plan for today plus a written diagnosis. This is the page that removes all guesswork — make it your habit.')}
+  ${tutRow('Welcome & setup','Once, then rarely','Set your level and goal so the plan is tailored. Replay the tour here whenever you want a refresher.')}
+
+  <div class="eyebrow" style="margin:18px 0 6px">The method &amp; five phases</div>
+  ${tutRow('Why this works / The weekly loop','Read once, revisit when drifting','The reasoning behind the method. Re-read the loop whenever you feel tempted to just grind past papers.')}
+  ${tutRow('Diagnose','After every paper','Sort each miss by failure type. The single most valuable habit — it tells you what kind of work you actually need.')}
+  ${tutRow('Repair','Right after diagnosing','Rebuild the broken mechanism for each conceptual error before doing any more questions.')}
+  ${tutRow('Test','After repairing','Produce the idea from a blank page and explain it aloud. Where you go vague is your real gap.')}
+  ${tutRow('Apply','Every study session','Mixed, interleaved problems plus real-world scenarios. This is where understanding actually forms.')}
+  ${tutRow('Retain','End of every session','Send facts to flashcards and whole problems to the scheduler so they survive the month.')}
+
+  <div class="eyebrow" style="margin:18px 0 6px">Active practice</div>
+  ${tutRow('Trigger trainer','2–3 ×/week, daily if it is your weakness','Trains recognising which model a situation needs — no maths. Best antidote to trigger gaps.')}
+  ${tutRow('Misconception check','When conceptual errors dominate','Hunts broken models with tempting wrong answers, then rebuilds them with a Socratic walk.')}
+  ${tutRow('Equation explorer','When learning or revising any equation','Predict, then move the sliders. Turns formulas into felt relationships.')}
+  ${tutRow('Counterfactuals','A few each week','Breaks a scenario ("what if gravity doubled?") to test whether you truly understand the mechanism.')}
+  ${tutRow('Physics sandbox','As needed, to build intuition','A live playground — change gravity, drag, bounciness and watch. Predict before you press go.')}
+
+  <div class="eyebrow" style="margin:18px 0 6px">Working tools</div>
+  ${tutRow('Error log','After every paper','Every gap, sorted by type. Watch the clusters — they drive the whole app.')}
+  ${tutRow('Review scheduler','Daily (clear what is due)','Spaced repetition for whole problems. Attempt cold, then grade honestly.')}
+  ${tutRow('Transfer notebook','1–2 entries/week','Explain real-world scenarios with physics — builds proof you can apply each concept.')}
+  ${tutRow('Daily lens','Once a day','Explain one real thing you saw. Tiny, but it compounds into real transfer.')}
+
+  <div class="eyebrow" style="margin:18px 0 6px">Reference — open when a specific gap appears</div>
+  ${tutRow('Misconception fixes','When Diagnose flags a conceptual error','The broken model, the truth, and the analogy that dislodges it.')}
+  ${tutRow('Concept contrasts','When two ideas blur together','Side-by-side pages for the pairs students mix up — mass vs weight, heat vs temperature, and more.')}
+  ${tutRow('Mental models','When learning a concept deeply','The correct model, the wrong ones, its predictions, and where it stops working.')}
+  ${tutRow('Analogy bank','In Repair, and when inventing scenarios','Load-bearing analogies you can run forward to predict behaviour.')}
+  ${tutRow('Concept map','Weekly, for A-level prep','The dependency tree — fix foundations before the topics that sit on them.')}
+
+  <div class="eyebrow" style="margin:18px 0 6px">Next</div>
+  ${tutRow('A-level bridge','When your GCSE models are clean','How the method shifts when you move up — switch only when models, not just marks, are solid.')}
+  ${tutRow('Resources','When you need external material','A short backbone: Isaac Physics, PMT, Anki.')}
+
+  <div class="note" style="margin-top:20px"><span class="eyebrow">Your first week</span>Day 1: read this page, then do <a onclick="go('diagnose')">Diagnose</a> on one paper section. Days 2–6: open <a onclick="go('plan')">Today's plan</a> and follow it — clear reviews, do the practice it suggests, one lens entry. Day 7: read your tutor's diagnosis and adjust. After that, the rhythm runs itself.</p>
+`;
+function tutRow(name,when,why){return `<div class="tutrow">
+  <div class="tutrow-head"><strong>${name}</strong><span class="tutwhen">${when}</span></div>
+  <div class="muted" style="font-size:.9rem">${why}</div></div>`}
+/* ====================== MISCONCEPTIONS (push ~24 new, all topics) ====================== */
+MIS.push(
+ // --- Electricity ---
+ {t:'A bulb lights with a battery and one wire',topic:'Electricity',
+  wrong:'A single wire from one battery terminal to a bulb is enough to light it.',
+  right:'You need a COMPLETE circuit — a continuous loop back to the other terminal. Charge must have a path all the way round, or no current flows at all.',
+  ana:'Like a conveyor belt or a circular train track: unless the loop is closed, nothing can keep moving round it.',
+  tell:'If the circuit is not a closed loop, current is zero. Always trace the path from one terminal back to the other.'},
+ {t:'Voltage flows through a component',topic:'Electricity',
+  wrong:'Voltage flows through the wires and components like current does.',
+  right:'Current flows THROUGH a component; voltage (potential difference) is measured ACROSS it — it is the energy difference between two points. They are different kinds of quantity.',
+  ana:'Current is the flow of water in a pipe; voltage is the pressure difference between two ends. You measure flow along the pipe, pressure across it.',
+  tell:'Ammeter in series (in the line), voltmeter in parallel (across). "Through" = current, "across" = voltage.'},
+ {t:'Thicker wires have more resistance',topic:'Electricity',
+  wrong:'A thicker wire resists current more because there is more metal in the way.',
+  right:'A thicker wire has LESS resistance — more cross-sectional area gives charge more room to flow. Resistance rises with length and falls with thickness.',
+  ana:'A wide motorway carries traffic more easily than a narrow lane; widening the road reduces the jam, it does not add to it.',
+  tell:'Longer or thinner ⇒ more resistance. Shorter or thicker ⇒ less. Heat also raises resistance in metals.'},
+ {t:'A battery stores charge / electricity',topic:'Electricity',
+  wrong:'A battery is a tank of charge or electricity that empties as you use it.',
+  right:'A battery stores CHEMICAL energy and uses it to do work on charge, pushing it round the circuit. The charge is already in the wires; the battery is the pump, not the reservoir of charge.',
+  ana:'A central-heating pump does not store the water — it pushes water that is already in the pipes. The battery pushes charge that is already in the circuit.',
+  tell:'Batteries store energy (chemical), not charge. "Flat" means the chemical energy is spent, not that the charge ran out.'},
+ // --- Particle model / thermal ---
+ {t:'Particles themselves expand when heated',topic:'Particle model',
+  wrong:'When a material is heated its particles grow bigger, so the material expands.',
+  right:'Individual particles do not change size. Heating makes them move/vibrate faster and take up more space on average, so the material expands — the spacing increases, not the particles.',
+  ana:'Dancers on a floor moving more wildly need more room and spread out — the dancers themselves are the same size.',
+  tell:'Thermal expansion = more particle motion and bigger gaps, never bigger particles.'},
+ {t:'Cold flows into warm things',topic:'Particle model',
+  wrong:'Cold moves into an object to cool it down.',
+  right:'There is no such thing as "cold" flowing. Only thermal energy moves, and it always flows from hotter to colder. Something feels cold because energy leaves YOU into it.',
+  ana:'Darkness is not a thing that flows in — it is the absence of light. "Cold" is just less thermal energy.',
+  tell:'Reframe every "cold gets in" as "heat flows out". Energy only ever moves hot → cold.'},
+ {t:'Boiling and evaporation are the same',topic:'Particle model',
+  wrong:'Evaporation and boiling are just two words for the same process.',
+  right:'Evaporation happens only at the surface, at any temperature, as the fastest particles escape. Boiling happens throughout the liquid, only at the boiling point, with bubbles of vapour forming inside.',
+  ana:'A puddle drying in the sun (evaporation, surface only) versus a rolling pan of water (boiling, bubbles throughout).',
+  tell:'Surface + any temperature = evaporation. Throughout + fixed boiling point + bubbles = boiling.'},
+ {t:'Gases have no mass / weigh nothing',topic:'Particle model',
+  wrong:'Air and other gases are weightless because you cannot feel them.',
+  right:'Gases are made of particles with mass, so they have mass and weight. A litre of air weighs roughly a gram; the atmosphere presses on you with real force.',
+  ana:'A football feels heavier when fully pumped — you have added the mass of the air inside.',
+  tell:'Gas particles have mass, so gases do too. You do not feel it because pressure pushes equally on all sides.'},
+ // --- Atomic & radioactivity ---
+ {t:'Irradiated objects become radioactive',topic:'Radioactivity',
+  wrong:'Anything exposed to radiation becomes radioactive itself.',
+  right:'Irradiation (being exposed to radiation) does not usually make something radioactive. Becoming radioactive requires CONTAMINATION — radioactive atoms physically landing on or in the object.',
+  ana:'Standing in sunlight does not turn you into a light source. Getting glow-paint on your hands does. Irradiation is the sunlight; contamination is the paint.',
+  tell:'Irradiation = exposed to rays (usually harmless afterwards). Contamination = radioactive material on/in you (keeps emitting).'},
+ {t:'Half-life is half the time to fully decay',topic:'Radioactivity',
+  wrong:'After one half-life the sample is gone; after two it has been gone twice over.',
+  right:'A half-life is the time for HALF the remaining unstable nuclei to decay. After each half-life half of what is left decays, so it approaches zero but never fully "runs out" on a clean schedule.',
+  ana:'Eat half a cake, then half of what remains, then half of that — you keep halving and never quite reach zero.',
+  tell:'Each half-life halves what is LEFT: 100 → 50 → 25 → 12.5. It is repeated halving, not a countdown to empty.'},
+ {t:'Alpha radiation is always the most dangerous',topic:'Radioactivity',
+  wrong:'Alpha is the most dangerous because it is the most ionising.',
+  right:'It depends on where the source is. Outside the body, alpha is stopped by skin and is least dangerous. Inside the body, its strong ionisation makes it the MOST dangerous. Context decides.',
+  ana:'A blowtorch is harmless across the room but devastating against your skin. Alpha is the blowtorch — danger depends on distance.',
+  tell:'Outside: gamma/beta worse (they penetrate). Inside: alpha worst (most ionising). Always ask "source inside or outside?".'},
+ {t:'The Sun is burning like a fire',topic:'Space',
+  wrong:'The Sun produces light and heat by burning fuel, like a giant fire (combustion).',
+  right:'The Sun runs on nuclear FUSION — hydrogen nuclei fusing into helium, releasing huge energy. It is not combustion and needs no oxygen; a fire could not last billions of years.',
+  ana:'A campfire chemically burns wood and needs air. The Sun fuses nuclei — a completely different, far more powerful process.',
+  tell:'Stars shine by fusion, not burning. No oxygen in space, and combustion could never power it for billions of years.'},
+ {t:'Seasons are caused by distance from the Sun',topic:'Space',
+  wrong:'It is summer when Earth is closer to the Sun and winter when it is further away.',
+  right:'Seasons come from Earth\'s axial TILT. The tilted hemisphere gets more direct sunlight and longer days (summer). Earth is actually slightly closer to the Sun during northern winter.',
+  ana:'Tilting a torch onto a table: angle it steeply and the light concentrates and brightens a small patch — that is summer. Spread it out and it weakens — winter.',
+  tell:'Opposite hemispheres have opposite seasons at the same time, which distance alone could never explain. Tilt is the cause.'},
+ // --- Forces & motion ---
+ {t:'Action and reaction forces cancel out',topic:'Forces',
+  wrong:'Newton\'s third-law pairs cancel, so nothing should ever move.',
+  right:'Equal and opposite pairs act on DIFFERENT objects, so they never cancel. Cancellation only happens between forces on the SAME object. You push the ground back, it pushes you forward.',
+  ana:'You push a wall (force on wall) and it pushes you (force on you). Those act on different things, so they cannot cancel each other.',
+  tell:'Third-law pairs act on two different objects — they never cancel. Balanced forces act on one object.'},
+ {t:'Centrifugal force pushes you outward',topic:'Motion',
+  wrong:'On a roundabout a real outward force throws you to the edge.',
+  right:'There is no real outward force. Your body tries to go straight (inertia) while the seat/door pushes you INWARD (centripetal). The "outward" feeling is just your inertia resisting being turned.',
+  ana:'On a sharp bend you slide toward the door because you wanted to keep going straight — the door then pushes you inward. Nothing pushes you out.',
+  tell:'Circular motion needs an inward (centripetal) force. The outward feeling is inertia, not a real force.'},
+ {t:'At terminal velocity there is no force',topic:'Forces',
+  wrong:'A skydiver at terminal velocity has no forces acting because they stop accelerating.',
+  right:'Forces are still there and large — weight down, drag up — but they are now BALANCED, so the resultant is zero and acceleration stops. Zero resultant force is not zero force.',
+  ana:'A tug-of-war with both teams pulling hard but neither moving: huge forces, zero resultant.',
+  tell:'Constant velocity means balanced forces, not absent forces. Terminal velocity = weight equals drag.'},
+ {t:'Bigger area always means more friction',topic:'Forces',
+  wrong:'A wider contact area always gives more friction.',
+  right:'For solid surfaces, friction depends on the surfaces and how hard they are pressed together (the normal force), not on the contact area. Wider tyres help through grip and heat, not simple area in the basic model.',
+  ana:'A heavy book slides with the same friction whether laid flat or on its spine — what matters is its weight pressing down and the surfaces, not the area.',
+  tell:'In the GCSE model, friction depends on surfaces and normal force, not contact area.'},
+ // --- Waves & light ---
+ {t:'In refraction the frequency changes',topic:'Waves',
+  wrong:'When light slows entering glass, its frequency drops.',
+  right:'Frequency stays the SAME in refraction (it is set by the source). The speed and wavelength change together, which is what bends the ray. Frequency is conserved across the boundary.',
+  ana:'People stepping from pavement onto mud: they take the same number of steps per second (frequency) but each step is shorter and slower (wavelength and speed change).',
+  tell:'Refraction: speed and wavelength change, frequency does not. Colour (set by frequency) stays the same.'},
+ {t:'Amplitude controls the pitch of a sound',topic:'Waves',
+  wrong:'A bigger amplitude makes a higher-pitched note.',
+  right:'Amplitude controls LOUDNESS (volume); FREQUENCY controls pitch. A loud low note has large amplitude and low frequency. They are independent.',
+  ana:'Shouting a low note versus whispering a high one: loudness (amplitude) and pitch (frequency) clearly come apart.',
+  tell:'Amplitude → loudness. Frequency → pitch. Do not let "bigger wave" mean "higher note".'},
+ {t:'Electromagnetic waves need a medium',topic:'Waves',
+  wrong:'Light and other EM waves need air or some material to travel through.',
+  right:'EM waves (light, radio, X-rays…) travel through a vacuum — that is why sunlight reaches us across empty space. Only mechanical waves like sound need a medium.',
+  ana:'Space is silent (no medium for sound) but not dark (light needs none). The Sun proves light crosses a vacuum.',
+  tell:'Through a vacuum? EM waves yes, sound no. "Needs a medium" is the signature of a mechanical wave.'},
+ {t:'Red light carries more energy than blue',topic:'Waves',
+  wrong:'Red is a "hot", strong colour, so red light has more energy.',
+  right:'Higher frequency means higher energy, and blue/violet light has a higher frequency than red. So BLUE light carries more energy per photon than red — the opposite of the "warm colour" intuition.',
+  ana:'Going up the rainbow toward violet is going up in frequency and energy; ultraviolet beyond it is energetic enough to burn skin, while infrared below red is gentler.',
+  tell:'Across the EM spectrum, energy rises with frequency: radio < infrared < red < blue < UV < X-ray < gamma.'},
+ // --- Magnetism ---
+ {t:'All metals are magnetic',topic:'Magnetism',
+  wrong:'Magnets attract all metals.',
+  right:'Only a few metals are magnetic — iron, steel, nickel and cobalt. Common metals like copper, aluminium and gold are not attracted to a magnet at all.',
+  ana:'A magnet will grab a steel paperclip but ignore an aluminium can or a copper coin entirely.',
+  tell:'Magnetic materials are iron, steel, nickel, cobalt. If a "metal" is not pulled, it is probably copper/aluminium.'},
+ {t:'A compass needle points to true (geographic) north',topic:'Magnetism',
+  wrong:'A compass points exactly at the geographic North Pole.',
+  right:'A compass aligns with Earth\'s MAGNETIC field, pointing to the magnetic north pole, which is offset from the geographic pole. Also, the pole it points to is physically a magnetic SOUTH pole (opposite poles attract).',
+  ana:'The needle follows the field lines, not the map\'s grid — like water following the slope of the land, not the drawn borders.',
+  tell:'Compasses follow the magnetic field, not geography. The north-seeking tip is attracted to Earth\'s magnetic south.'},
+ // --- Energy ---
+ {t:'Renewable energy means clean and unlimited',topic:'Energy',
+  wrong:'Renewable resources never run out and never cause any harm.',
+  right:'Renewable means it is replenished on a human timescale (wind, solar, tidal), but they still have downsides — intermittency, land use, manufacturing impacts — and are not "free" or limitless in practice.',
+  ana:'A well-managed orchard regrows fruit each year (renewable), but it still needs land, labour and good weather — it is not effort-free or infinite.',
+  tell:'Renewable = replenished naturally, NOT automatically clean, free, or unlimited. Weigh reliability and impact too.'}
+);
+/* ====================== ANALOGIES (push ~24 new) ====================== */
+ANA.push(
+ {topic:'Electricity',k:'Complete circuit = a circular train track',v:'Charge can only flow if the loop is closed all the way round. Break the track anywhere and every train stops — which is why a single wire to a bulb does nothing.'},
+ {topic:'Electricity',k:'Series vs parallel = one road vs many lanes',v:'In series all current takes one road, so adding a component slows everything. In parallel each branch is its own lane at full voltage, so each works independently and total current rises.'},
+ {topic:'Electricity',k:'Wire thickness = width of a corridor',v:'A wide corridor lets people through easily (low resistance); a narrow one jams (high resistance). Longer corridor, more resistance; wider, less.'},
+ {topic:'Electricity',k:'Static charge = socks on a carpet',v:'Rubbing transfers electrons, leaving one object negative and the other positive. The build-up jumps as a spark when it finally finds a path to earth.'},
+ {topic:'Particle model',k:'States of matter = a dance floor',v:'Solid: dancers locked in a grid, vibrating in place. Liquid: still touching but shuffling past each other. Gas: flying apart across the whole room. Same dancers, different freedom.'},
+ {topic:'Particle model',k:'Specific heat capacity = bucket size',v:'Water is a big bucket — it takes a lot of energy to fill (heat up) and holds it well. That is why the sea moderates climate and water is used as a coolant.'},
+ {topic:'Particle model',k:'Latent heat = paying to change the queue, not move it',v:'During melting or boiling the temperature pauses: all the energy goes into breaking bonds (changing state), not raising temperature. It is a one-off toll to change phase.'},
+ {topic:'Particle model',k:'Gas pressure = popcorn hitting the lid',v:'Countless particles drumming on the walls create pressure. Heat them and they hit harder and more often, so pressure rises — the basis of the pressure-temperature law.'},
+ {topic:'Radioactivity',k:'Half-life = halving a cake',v:'Each half-life removes half of what remains: 100 → 50 → 25 → 12.5. You keep halving and approach zero without a clean "all gone" moment.'},
+ {topic:'Radioactivity',k:'Irradiation vs contamination = sunlight vs paint',v:'Standing in radiation (irradiation) is like standing in sunlight — it stops when you leave. Getting radioactive dust on you (contamination) is like glow-paint that keeps emitting until removed.'},
+ {topic:'Radioactivity',k:'Random decay = popcorn popping',v:'You cannot predict which kernel pops next (each nucleus is random), yet the overall rate is reliable — which is why half-life works in bulk despite individual unpredictability.'},
+ {topic:'Forces',k:'Newton\'s third law = stepping off a boat',v:'Push the boat backward and it pushes you forward — equal and opposite, on different objects. Rockets push exhaust down and are pushed up the same way.'},
+ {topic:'Forces',k:'Moments = a longer spanner',v:'Turning effect = force × distance from the pivot. A longer spanner multiplies your force, which is why it loosens a stubborn bolt a short one cannot.'},
+ {topic:'Forces',k:'Pressure in fluids = deeper water squeezes harder',v:'Pressure grows with depth because more liquid weighs down from above. Dam walls are built thicker at the bottom for exactly this reason.'},
+ {topic:'Forces',k:'Hooke\'s law = a well-behaved spring',v:'Within its limit, a spring stretches in proportion to the force: double the pull, double the extension. Past the limit of proportionality the rule breaks and it deforms.'},
+ {topic:'Forces',k:'Stopping distance = thinking plus braking',v:'Total stopping distance is reaction-time travel (thinking) plus braking distance. Speed stretches both, and braking distance grows with the square of speed — small speed rises cost a lot of metres.'},
+ {topic:'Motion',k:'Distance vs displacement = a walk to the shop and back',v:'Walk there and back: distance is the full path you covered, displacement is zero because you ended where you started. One is a total, the other a straight-line from start to finish.'},
+ {topic:'Waves',k:'Refraction = a trolley rolling onto mud at an angle',v:'One wheel hits the mud and slows before the other, swinging the trolley round. Light slows entering glass at an angle and bends the same way — speed changes, frequency does not.'},
+ {topic:'Waves',k:'EM spectrum = one family, different energies',v:'Radio, microwave, infrared, visible, UV, X-ray, gamma are all the same kind of wave at rising frequency and energy. Same nature, wildly different effects — from radio signals to cell-damaging gamma.'},
+ {topic:'Waves',k:'Amplitude vs frequency = loudness vs pitch',v:'Amplitude is how big the wave is (loudness/brightness); frequency is how often it cycles (pitch/colour). You can change one without the other — a loud low note, a quiet high one.'},
+ {topic:'Magnetism',k:'Magnetic field = iron-filing contours',v:'Field lines run north to south, closest together where the field is strongest (at the poles). A compass simply lines up along these invisible contours.'},
+ {topic:'Magnetism',k:'Electromagnet = magnetism you can switch',v:'A current through a coil makes a magnetic field; cut the current and it vanishes. That on/off control is why scrapyard cranes and door locks use electromagnets, not bar magnets.'},
+ {topic:'Magnetism',k:'Generator = motor run backwards',v:'A motor turns current into motion; spin it by hand instead and it produces current. Moving a wire through a field induces a voltage — the basis of power stations.'},
+ {topic:'Space',k:'Orbit = falling and forever missing the ground',v:'A satellite is pulled down by gravity but moves sideways so fast it keeps missing Earth. It is in constant free fall, which is why everything inside floats.'}
+);
+
+/* ====================== CONCEPT CONTRASTS (push ~10 new) ====================== */
+CONTRAST.push(
+ {a:'Series',b:'Parallel',topic:'Electricity',
+  rows:[['Current path','one single loop','splits across branches'],
+        ['Current','same everywhere','divides between branches'],
+        ['Voltage','shared across components','full supply across each branch'],
+        ['If one breaks','whole circuit stops','other branches keep working'],
+        ['Total resistance','adds up (rises)','less than the smallest branch']],
+  confusion:'Both are "circuits with components", but current and voltage behave oppositely in each.',
+  tell:'Series = one path, shared voltage, one break kills all. Parallel = many paths, full voltage each, independent.'},
+ {a:'Conduction',b:'Convection',topic:'Particle model',
+  rows:[['How energy moves','vibrations passed particle to particle','warm fluid rises, cool sinks (a current)'],
+        ['Happens in','mainly solids (especially metals)','liquids and gases (fluids)'],
+        ['Particles travel?','no — they stay put','yes — the fluid itself moves'],
+        ['Example','a metal spoon heating up','a radiator warming a room']],
+  confusion:'Both transfer thermal energy, but only convection actually moves the material.',
+  tell:'Conduction = energy passed along, particles stay. Convection = the fluid itself circulates.'},
+ {a:'Fission',b:'Fusion',topic:'Radioactivity',
+  rows:[['Process','a large nucleus splits','small nuclei join together'],
+        ['Fuel','uranium / plutonium','hydrogen isotopes'],
+        ['Where','nuclear power stations now','the Sun and stars'],
+        ['Conditions','triggered by a neutron','enormous temperature & pressure']],
+  confusion:'Both are nuclear and release huge energy, but one splits and the other joins.',
+  tell:'Fission = split a big nucleus (power stations). Fusion = join small ones (stars). Splitting vs joining.'},
+ {a:'Alpha',b:'Beta',topic:'Radioactivity',
+  rows:[['What it is','2 protons + 2 neutrons (helium nucleus)','a fast electron from the nucleus'],
+        ['Charge','+2','−1'],
+        ['Ionising power','very strong','moderate'],
+        ['Penetration','stopped by paper/skin','stopped by a few mm of aluminium']],
+  confusion:'Both are particle radiations, but differ in mass, charge and how far they get.',
+  tell:'Alpha: big, +2, very ionising, barely penetrates. Beta: tiny electron, −1, moderate everything.'},
+ {a:'Transverse',b:'Longitudinal',topic:'Waves',
+  rows:[['Oscillation','across the direction of travel','along the direction of travel'],
+        ['Looks like','peaks and troughs','compressions and rarefactions'],
+        ['Examples','light, water, EM waves','sound, a pushed slinky'],
+        ['Through a vacuum?','EM ones yes','no — needs a medium']],
+  confusion:'Both transfer energy without moving matter, but the oscillation direction differs.',
+  tell:'Transverse = oscillate across (rope shaken sideways). Longitudinal = oscillate along (slinky pushed end-on).'},
+ {a:'Reflection',b:'Refraction',topic:'Waves',
+  rows:[['What happens','wave bounces off a surface','wave bends entering a new medium'],
+        ['Speed change?','no','yes — it speeds up or slows down'],
+        ['Cause','angle in = angle out','one side slows before the other'],
+        ['Example','a mirror image','a straw looking bent in water']],
+  confusion:'Both change a wave\'s direction, but only refraction involves a change of speed.',
+  tell:'Reflection bounces (same medium, same speed). Refraction bends because speed changes at a boundary.'},
+ {a:'Mass',b:'Inertia',topic:'Forces',
+  rows:[['What it is','the amount of matter (kg)','resistance to a change in motion'],
+        ['Measured as','kilograms','no separate unit — quantified by mass'],
+        ['Relationship','mass IS the measure of inertia','more mass ⇒ more inertia'],
+        ['Felt as','how much stuff there is','how hard it is to start/stop/turn']],
+  confusion:'They are closely linked — inertia is what mass does — but they are not the same idea.',
+  tell:'Mass is the amount of matter; inertia is its reluctance to change motion. More mass = more inertia.'},
+ {a:'Distance',b:'Displacement',topic:'Motion',
+  rows:[['Type','scalar — size only','vector — size and direction'],
+        ['Measures','total path travelled','straight line from start to end'],
+        ['There and back','adds up','can be zero'],
+        ['Example','a 400 m lap = 400 m','a 400 m lap = 0 m displacement']],
+  confusion:'They are equal for a straight-line trip, which hides the difference until the path curves or returns.',
+  tell:'Distance is the whole journey; displacement is start-to-finish with direction. A round trip has zero displacement.'},
+ {a:'AC',b:'DC',topic:'Electricity',
+  rows:[['Direction of flow','reverses back and forth','one constant direction'],
+        ['Source','mains supply','cells and batteries'],
+        ['Frequency (UK)','50 Hz','0 Hz (steady)'],
+        ['Used for','transmitting mains power','electronics, portable devices']],
+  confusion:'Both are electric current; the difference is whether the direction keeps flipping.',
+  tell:'AC alternates (mains, 50 Hz). DC is steady one-way (batteries). Direction is the whole distinction.'},
+ {a:'Conductor',b:'Insulator',topic:'Electricity',
+  rows:[['Charge flow','allows it easily','blocks it'],
+        ['Free electrons','many','very few'],
+        ['Examples','metals, graphite','plastic, rubber, glass'],
+        ['Used for','wires, contacts','cable coatings, safety casing']],
+  confusion:'Both are everywhere in a circuit; one carries current, the other contains it safely.',
+  tell:'Conductors have free electrons and carry current; insulators do not and block it. Metals conduct, plastics insulate.'}
+);
+/* ====================== TRIGGER TRAINER (push ~28 new, all topics) ====================== */
+TRIG.push(
+ // Energy
+ {s:'A kettle is switched on and the water heats up, but the kettle and kitchen also get slightly warm.',mode:'multi',
+  opts:[{t:'Energy transfer (electrical → thermal)',c:1},{t:'Conservation of energy',c:1},{t:'Efficiency / wasted energy',c:1},{t:'Energy being destroyed',c:0}],
+  why:'Electrical energy transfers mostly to the water\'s thermal store; some dissipates to the surroundings (wasted), but the total is conserved — efficiency is just the useful fraction.'},
+ {s:'A diver climbs a 10 m board, pauses, then jumps and speeds up on the way down.',mode:'multi',
+  opts:[{t:'Gravitational potential energy',c:1},{t:'Kinetic energy',c:1},{t:'Energy transfer GPE → KE',c:1},{t:'Elastic potential energy',c:0}],
+  why:'Climbing stores GPE; falling transfers it to KE, which is why speed builds. No spring is involved, so there is no elastic store here.'},
+ {s:'A wind-up toy is wound, then released, and it scoots across the floor before stopping.',mode:'multi',
+  opts:[{t:'Elastic potential energy',c:1},{t:'Energy transfer to kinetic',c:1},{t:'Dissipation by friction',c:1},{t:'Nuclear energy',c:0}],
+  why:'Winding stores elastic PE in the spring; it transfers to KE to move the toy; friction dissipates it as heat until it stops.'},
+ // Electricity
+ {s:'Two bulbs are wired in parallel; you unscrew one and the other stays lit at full brightness.',mode:'single',
+  opts:[{t:'Each branch gets the full supply voltage independently',c:1},{t:'Current is used up by the first bulb',c:0},{t:'They share the voltage equally',c:0}],
+  why:'In parallel each branch is across the full supply voltage and forms its own loop, so removing one does not affect the other.'},
+ {s:'A phone charger plug feels warm after charging for an hour.',mode:'multi',
+  opts:[{t:'Resistive (Joule) heating, P = I²R',c:1},{t:'Energy dissipated as heat',c:1},{t:'Efficiency below 100%',c:1},{t:'The charger storing heat',c:0}],
+  why:'Current through resistance dissipates some electrical energy as heat (P = I²R). It is normal inefficiency, not heat being stored.'},
+ {s:'You rub a balloon on your hair and it then sticks to the wall.',mode:'multi',
+  opts:[{t:'Static electricity (charge transfer)',c:1},{t:'Electrons transferred by friction',c:1},{t:'Induced charge / attraction',c:1},{t:'Magnetism',c:0}],
+  why:'Rubbing transfers electrons, charging the balloon. The charged balloon induces an opposite charge in the wall and is attracted — this is electrostatics, not magnetism.'},
+ {s:'A 2 kW heater is left on for twice as long as a 1 kW heater.',mode:'single',
+  opts:[{t:'Energy = power × time, so it uses four times as much',c:1},{t:'They use the same energy',c:0},{t:'Power and energy are the same thing',c:0}],
+  why:'Energy = power × time. Double the power AND double the time multiplies energy by four. Power is the rate; energy is the total.'},
+ // Particle model / thermal
+ {s:'A sealed, rigid can of gas is heated over a flame and eventually bursts.',mode:'multi',
+  opts:[{t:'Gas pressure rises with temperature',c:1},{t:'Particles hit the walls harder and more often',c:1},{t:'Fixed volume (rigid can)',c:1},{t:'The gas gains mass',c:0}],
+  why:'Heating speeds the particles so they strike the walls harder and more frequently; at fixed volume this raises pressure until the can fails. Mass is unchanged.'},
+ {s:'Ice cubes are added to a warm drink and the drink cools while the ice melts.',mode:'multi',
+  opts:[{t:'Thermal energy flows from hot to cold',c:1},{t:'Latent heat absorbed during melting',c:1},{t:'Specific heat capacity',c:1},{t:'Cold flowing from ice into the drink',c:0}],
+  why:'Energy flows from the warm drink to the ice (never "cold" the other way). Some warms the meltwater (specific heat); much is absorbed as latent heat to melt the ice with no temperature rise.'},
+ {s:'A puddle slowly disappears on a cool day without ever boiling.',mode:'single',
+  opts:[{t:'Evaporation — fast surface particles escape',c:1},{t:'Boiling',c:0},{t:'The water was destroyed',c:0}],
+  why:'Evaporation happens at the surface at any temperature as the fastest particles escape; no bubbles or boiling point are needed.'},
+ // Atomic & radioactivity
+ {s:'A radioactive sample\'s count rate drops from 80 to 20 counts/s over 10 minutes.',mode:'multi',
+  opts:[{t:'Half-life (two halvings here)',c:1},{t:'Random but predictable-in-bulk decay',c:1},{t:'Activity decreasing over time',c:1},{t:'The source being used up evenly',c:0}],
+  why:'80 → 40 → 20 is two halvings, so the half-life is 5 minutes. Decay is random per nucleus but statistically reliable, and activity falls (it does not decrease linearly to empty).'},
+ {s:'A worker stands near a sealed gamma source for a short time, then leaves unaffected.',mode:'single',
+  opts:[{t:'Irradiation (exposure), not contamination',c:1},{t:'They are now radioactive',c:0},{t:'They are contaminated',c:0}],
+  why:'Being exposed to rays is irradiation; it does not make the person radioactive. Contamination would require radioactive material physically on or in them.'},
+ // Forces — moments, pressure, springs, momentum, stopping
+ {s:'A child sits far from the pivot of a see-saw to balance a heavier adult sitting close in.',mode:'multi',
+  opts:[{t:'Moments (turning effect)',c:1},{t:'Moment = force × distance from pivot',c:1},{t:'Principle of balanced moments',c:1},{t:'Air resistance',c:0}],
+  why:'Balance needs equal clockwise and anticlockwise moments. The lighter child compensates with a larger distance from the pivot, since moment = force × distance.'},
+ {s:'A drawing pin pushed with gentle thumb pressure pierces a board easily.',mode:'multi',
+  opts:[{t:'Pressure = force / area',c:1},{t:'Tiny contact area concentrates the force',c:1},{t:'High pressure at the point',c:1},{t:'The thumb exerts huge force',c:0}],
+  why:'A modest force on the pin\'s tiny tip gives enormous pressure (P = F/A), enough to pierce — the force is small, the area is what makes the difference.'},
+ {s:'A spring stretches 4 cm under 2 N and 8 cm under 4 N, then stops being proportional.',mode:'multi',
+  opts:[{t:'Hooke\'s law (force ∝ extension)',c:1},{t:'Spring constant',c:1},{t:'Limit of proportionality',c:1},{t:'Momentum',c:0}],
+  why:'Equal extension per newton shows Hooke\'s law and a constant spring constant — until the limit of proportionality, beyond which the linear relationship breaks down.'},
+ {s:'A loaded lorry and a bicycle travel at the same speed; the lorry is far harder to stop.',mode:'multi',
+  opts:[{t:'Momentum p = mv',c:1},{t:'Greater mass ⇒ greater momentum',c:1},{t:'Larger force or time needed to stop it',c:1},{t:'The lorry has more energy only because it is faster',c:0}],
+  why:'At equal speed the lorry\'s far larger mass gives it much greater momentum, so stopping it needs a bigger force or a longer time (impulse = change in momentum).'},
+ {s:'A car travelling faster needs a much longer distance to stop in an emergency.',mode:'multi',
+  opts:[{t:'Stopping distance = thinking + braking distance',c:1},{t:'Braking distance grows with speed squared',c:1},{t:'Kinetic energy to dissipate',c:1},{t:'Reaction time depends on speed',c:0}],
+  why:'Higher speed increases thinking distance (linearly) and braking distance (with the square of speed), because far more kinetic energy must be removed. Reaction time itself is roughly fixed.'},
+ {s:'A car airbag inflates so the passenger stops over a longer time in a crash.',mode:'multi',
+  opts:[{t:'Impulse = force × time',c:1},{t:'Longer stopping time reduces the force',c:1},{t:'Change in momentum is the same either way',c:1},{t:'The airbag removes the momentum for free',c:0}],
+  why:'The change in momentum is fixed by the crash, but spreading it over a longer time lowers the peak force on the passenger — that is why airbags and crumple zones save lives.'},
+ // Waves & light
+ {s:'A straw in a glass of water looks bent at the surface.',mode:'single',
+  opts:[{t:'Refraction — light changes speed at the boundary',c:1},{t:'Reflection',c:0},{t:'The straw is actually bent',c:0}],
+  why:'Light slows passing from water to air and bends at the surface, so the submerged part appears displaced — refraction, with frequency unchanged.'},
+ {s:'A radio works indoors, but visible light cannot pass through the walls.',mode:'multi',
+  opts:[{t:'Electromagnetic spectrum (different frequencies)',c:1},{t:'Longer wavelengths penetrate more',c:1},{t:'Radio and light are the same kind of wave',c:1},{t:'Radio needs a medium',c:0}],
+  why:'Radio and light are both EM waves; their very different frequencies/wavelengths give very different behaviour (radio passes through walls, visible light does not). Neither needs a medium.'},
+ {s:'A guitar string is plucked harder and the same note sounds louder.',mode:'multi',
+  opts:[{t:'Amplitude controls loudness',c:1},{t:'Frequency (pitch) unchanged',c:1},{t:'Energy carried by the wave increases',c:1},{t:'Pitch rises with amplitude',c:0}],
+  why:'Plucking harder increases amplitude (loudness) and the energy carried, but the frequency — and so the pitch — is unchanged. Amplitude and pitch are independent.'},
+ {s:'Sunlight reaches Earth across the vacuum of space, but astronauts cannot hear each other without radios.',mode:'multi',
+  opts:[{t:'Light is an EM wave (no medium needed)',c:1},{t:'Sound is mechanical (needs a medium)',c:1},{t:'Vacuum carries EM but not sound',c:1},{t:'Space is too far for sound only',c:0}],
+  why:'EM waves cross a vacuum (so we get sunlight), but sound is mechanical and needs particles, so there is silence in space regardless of distance.'},
+ // Magnetism & electromagnetism
+ {s:'A current-carrying wire placed between magnet poles jumps sideways when switched on.',mode:'multi',
+  opts:[{t:'The motor effect',c:1},{t:'Force on a current in a magnetic field',c:1},{t:'Fleming\'s left-hand rule',c:1},{t:'Static electricity',c:0}],
+  why:'A current in a magnetic field experiences a force (the motor effect); its direction follows Fleming\'s left-hand rule. This is the basis of electric motors.'},
+ {s:'A magnet is pushed in and out of a coil and a sensitive meter flicks back and forth.',mode:'multi',
+  opts:[{t:'Electromagnetic induction',c:1},{t:'A changing magnetic field induces a voltage',c:1},{t:'Generator effect',c:1},{t:'A steady field induces current',c:0}],
+  why:'A CHANGING magnetic field through the coil induces a voltage (and current). Movement is essential — a stationary magnet induces nothing. This is how generators work.'},
+ {s:'A device steps mains voltage down from 230 V to 12 V for a doorbell.',mode:'multi',
+  opts:[{t:'Transformer',c:1},{t:'Relies on alternating current',c:1},{t:'Turns ratio sets the voltage ratio',c:1},{t:'Works on direct current',c:0}],
+  why:'A transformer changes AC voltage using the ratio of coil turns. It needs AC (a changing field) to work — it does nothing with steady DC.'},
+ // Space
+ {s:'The International Space Station orbits Earth and the astronauts float inside.',mode:'multi',
+  opts:[{t:'Gravity still acts (provides centripetal force)',c:1},{t:'Continuous free fall = apparent weightlessness',c:1},{t:'Orbital (circular) motion',c:1},{t:'There is no gravity that high',c:0}],
+  why:'Gravity is still strong and provides the centripetal force for the orbit; the floating is because the station and astronauts fall together (free fall), not because gravity is absent.'},
+ {s:'Light from distant galaxies is shifted toward the red end of the spectrum, more so for further galaxies.',mode:'multi',
+  opts:[{t:'Red shift',c:1},{t:'Evidence the universe is expanding',c:1},{t:'Supports the Big Bang',c:1},{t:'The galaxies are physically red-coloured',c:0}],
+  why:'Red shift means wavelengths are stretched as galaxies recede; greater shift for more distant galaxies indicates expansion, key evidence for the Big Bang — not that the galaxies are coloured red.'},
+ {s:'A massive star runs out of fuel, swells, then collapses and explodes.',mode:'multi',
+  opts:[{t:'Star life cycle',c:1},{t:'Fusion balance lost when fuel runs low',c:1},{t:'Supernova for massive stars',c:1},{t:'It simply burns out like a candle',c:0}],
+  why:'A star is balanced between gravity and fusion pressure; when fuel runs low that balance fails, and a massive star swells then collapses and explodes as a supernova — not a gentle burnout.'}
+);
+/* ====================== MISCONCEPTION QUIZ (push ~20 new, with Socratic walks) ====================== */
+function miIdx(title){return MIS.findIndex(m=>m.t===title)}
+QUIZ.push(
+ {mi:miIdx('Heavier / bigger things sink, lighter ones float'),
+  q:'A huge steel cargo ship floats, but a small steel bolt sinks. Why?',
+  opts:[{t:'Floating depends on density vs water, not weight',c:1},{t:'The ship is lighter than the bolt',c:0},{t:'Big things always float',c:0}],
+  feels:'Heavy things often sink in everyday life, so "the ship is heavier so it should sink" feels right — but it is density that matters.',
+  soc:['Is the steel ship heavier or lighter than the steel bolt?',
+       'The ship\'s shape encloses a lot of air. What does that do to its AVERAGE density?',
+       'If its average density is less than water\'s, what happens — and what if you crushed it into a solid block?']},
+ {mi:miIdx('Vacuums "suck" / nature abhors a vacuum'),
+  q:'You drink through a straw. What actually moves the liquid up?',
+  opts:[{t:'Atmospheric pressure pushes it up from outside',c:1},{t:'Your mouth sucks/pulls it up',c:0},{t:'The vacuum pulls it up',c:0}],
+  feels:'It feels exactly like sucking, so "I pull the drink up" seems obviously true.',
+  soc:['When you "suck", what happens to the air pressure inside your mouth?',
+       'Now the pressure outside (atmosphere) is higher than inside. Which way will it push the liquid?',
+       'So is the drink pulled by a vacuum, or pushed by the higher pressure outside?']},
+ {mi:miIdx('Sound and light travel the same way'),
+  q:'Astronauts on a spacewalk need radios to talk, yet they can clearly see each other. Why?',
+  opts:[{t:'Light is EM (crosses vacuum); sound is mechanical (needs a medium)',c:1},{t:'Space is too far for sound but not light',c:0},{t:'Their helmets block sound',c:0}],
+  feels:'Sound and light both "travel to us", so it feels like they should behave the same way in space.',
+  soc:['Sound is particles passing on a vibration. Is there a medium to carry it in space?',
+       'Light is an electromagnetic wave. Does it need particles to travel?',
+       'So why is space silent but not dark?']},
+ {mi:miIdx('A bulb lights with a battery and one wire'),
+  q:'You connect one wire from a battery to a bulb. Will it light?',
+  opts:[{t:'No — you need a complete loop back to the other terminal',c:1},{t:'Yes — one wire is enough to deliver current',c:0},{t:'Only if the wire is thick',c:0}],
+  feels:'One connection looks like "plugged in", so it feels like current should flow.',
+  soc:['Current is charge flowing round. Where does the charge go after the bulb if there is only one wire?',
+       'For a steady flow, what kind of path does the charge need?',
+       'So how many connections back to the battery does a working circuit need?']},
+ {mi:miIdx('Voltage flows through a component'),
+  q:'How do you connect a voltmeter to measure the voltage across a bulb?',
+  opts:[{t:'In parallel — across the bulb',c:1},{t:'In series — in the line with the bulb',c:0},{t:'Either way works the same',c:0}],
+  feels:'If you picture voltage as something flowing, putting the meter "in the flow" (series) feels right.',
+  soc:['Does current flow THROUGH a component, or is voltage measured ACROSS it?',
+       'Voltage is the energy difference between two points. How many points must the meter touch?',
+       'So should the voltmeter sit in the line (series) or bridge across the two ends (parallel)?']},
+ {mi:miIdx('Thicker wires have more resistance'),
+  q:'Which has the lower resistance: a short fat wire or a long thin one (same metal)?',
+  opts:[{t:'The short fat wire',c:0},{t:'They are equal',c:0},{t:'The short fat wire has lower resistance',c:1}],
+  feels:'A thick wire has "more metal", so it feels like more material to push through.',
+  soc:['Picture charge flowing like traffic. Does a wider road carry traffic more or less easily?',
+       'Now make the road longer. Does that help or hinder the flow?',
+       'So how do thickness and length each affect resistance?']},
+ {mi:miIdx('A battery stores charge / electricity'),
+  q:'What does a battery actually store?',
+  opts:[{t:'Chemical energy',c:1},{t:'A supply of charge/electricity',c:0},{t:'Electrons it sends out one-way',c:0}],
+  feels:'A "flat" battery feels empty of electricity, so it seems like it stored charge that ran out.',
+  soc:['Is there already charge (electrons) in the metal wires before you connect the battery?',
+       'If the charge is already there, what is the battery adding to make it move?',
+       'So what runs out when a battery goes flat — the charge, or the stored energy?']},
+ {mi:miIdx('Particles themselves expand when heated'),
+  q:'A metal bar expands when heated. What happens to its atoms?',
+  opts:[{t:'They vibrate more and sit slightly further apart',c:1},{t:'Each atom grows bigger',c:0},{t:'New atoms appear',c:0}],
+  feels:'The bar got bigger, so it feels like the atoms inside must have grown.',
+  soc:['Heating gives particles more energy. What does that do to their motion?',
+       'If they vibrate more vigorously, what happens to the average space between them?',
+       'So does the metal expand because atoms grow, or because the gaps grow?']},
+ {mi:miIdx('Cold flows into warm things'),
+  q:'You hold an ice cube and your hand feels cold. What is really happening?',
+  opts:[{t:'Thermal energy flows from your hand into the ice',c:1},{t:'Cold flows from the ice into your hand',c:0},{t:'Both cold and heat swap over',c:0}],
+  feels:'It genuinely feels like cold is entering your hand, so "cold flows in" seems obvious.',
+  soc:['Is "cold" a substance, or just the absence of thermal energy?',
+       'Energy always flows from hotter to colder. Which is hotter, your hand or the ice?',
+       'So which way does the energy actually move, and why does your hand feel cold?']},
+ {mi:miIdx('Boiling and evaporation are the same'),
+  q:'A wet towel dries on a cool washing line. Is this boiling or evaporation?',
+  opts:[{t:'Evaporation — surface particles escape at any temperature',c:1},{t:'Boiling',c:0},{t:'Neither — the water vanishes',c:0}],
+  feels:'Both turn liquid into gas, so they feel like the same process with different names.',
+  soc:['Is the towel anywhere near water\'s boiling point?',
+       'Where do the escaping particles leave from — throughout the liquid, or just the surface?',
+       'So which process needs the boiling point and bubbles, and which happens at any temperature at the surface?']},
+ {mi:miIdx('Irradiated objects become radioactive'),
+  q:'Food is passed through a gamma beam to kill bacteria. Is the food now radioactive?',
+  opts:[{t:'No — irradiation does not make it radioactive',c:1},{t:'Yes — anything hit by radiation becomes radioactive',c:0},{t:'Only the surface becomes radioactive',c:0}],
+  feels:'"Exposed to radiation" sounds like it must leave the food radioactive.',
+  soc:['Does standing in sunlight turn you into a source of light afterwards?',
+       'What would have to physically happen for the food to keep emitting radiation itself?',
+       'So what is the difference between irradiation (exposure) and contamination (material on/in it)?']},
+ {mi:miIdx('Half-life is half the time to fully decay'),
+  q:'A sample has a half-life of 5 years. How much is left after 10 years?',
+  opts:[{t:'A quarter of the original',c:1},{t:'None — it has fully decayed',c:0},{t:'Half of the original',c:0}],
+  feels:'"Half-life" sounds like half the time to disappear, so two of them feels like "all gone".',
+  soc:['What does one half-life do to the amount remaining?',
+       'Start with 100%. After the first 5 years, how much is left? After the next 5?',
+       'So is each half-life halving the time, or halving what remains?']},
+ {mi:miIdx('The Sun is burning like a fire'),
+  q:'What process powers the Sun?',
+  opts:[{t:'Nuclear fusion of hydrogen into helium',c:1},{t:'Burning fuel (combustion)',c:0},{t:'Friction of gases',c:0}],
+  feels:'The Sun looks like a giant fire, so "it is burning" feels obvious.',
+  soc:['Combustion needs oxygen. Is there oxygen in space for the Sun to burn in?',
+       'Could any chemical fire keep going for billions of years?',
+       'So what nuclear process — joining small nuclei — actually releases the Sun\'s energy?']},
+ {mi:miIdx('Seasons are caused by distance from the Sun'),
+  q:'Why is it summer in the UK while it is winter in Australia at the same time?',
+  opts:[{t:'Earth\'s axial tilt changes the angle of sunlight',c:1},{t:'The UK is closer to the Sun then',c:0},{t:'The Sun gets hotter for the UK',c:0}],
+  feels:'Closer-means-hotter feels intuitive, so "summer = nearer the Sun" seems reasonable.',
+  soc:['If seasons were caused by distance, would both hemispheres not have the same season at once?',
+       'They have OPPOSITE seasons. What about Earth could cause that?',
+       'How does tilting a hemisphere toward the Sun change the directness of the sunlight it gets?']},
+ {mi:miIdx('Action and reaction forces cancel out'),
+  q:'A rocket pushes exhaust gas down and accelerates up. If the forces are equal and opposite, why does it move?',
+  opts:[{t:'The pair acts on different objects, so they do not cancel',c:1},{t:'The upward force is actually bigger',c:0},{t:'Action-reaction does not apply to rockets',c:0}],
+  feels:'"Equal and opposite" sounds like it should add to zero and stop anything moving.',
+  soc:['Which object does the "push down on the gas" act on? Which does the "push up on the rocket" act on?',
+       'Can two forces cancel if they act on different objects?',
+       'So what has to be true for forces to cancel — and is that the case here?']},
+ {mi:miIdx('At terminal velocity there is no force'),
+  q:'A skydiver falls at a steady terminal velocity. What is the resultant force on them?',
+  opts:[{t:'Zero — weight and drag are balanced',c:1},{t:'There are no forces acting',c:0},{t:'A large downward force',c:0}],
+  feels:'No acceleration feels like "nothing is acting", so "no force" seems right.',
+  soc:['Is the skydiver\'s weight still pulling down?',
+       'Is air resistance (drag) still pushing up?',
+       'If both are large but equal, what is the RESULTANT — and is that the same as "no force"?']},
+ {mi:miIdx('In refraction the frequency changes'),
+  q:'Light slows as it enters glass and bends. What happens to its frequency?',
+  opts:[{t:'It stays the same; speed and wavelength change',c:1},{t:'The frequency drops',c:0},{t:'The frequency rises',c:0}],
+  feels:'Since the wave clearly changes as it enters, it feels like everything about it changes.',
+  soc:['What sets the frequency of the light — the glass, or the source that produced it?',
+       'If the source is unchanged, can the boundary alter how many waves per second arrive?',
+       'So in refraction, which two quantities change together, and which stays fixed?']},
+ {mi:miIdx('Amplitude controls the pitch of a sound'),
+  q:'You pluck a guitar string harder. What changes about the sound?',
+  opts:[{t:'It gets louder (bigger amplitude), same pitch',c:1},{t:'It gets higher in pitch',c:0},{t:'Both pitch and loudness rise together',c:0}],
+  feels:'A "bigger" wave feels like it should be a "higher" note.',
+  soc:['Which wave property does plucking harder increase — amplitude or frequency?',
+       'Which property sets loudness, and which sets pitch?',
+       'So does a harder pluck change the volume, the pitch, or both?']},
+ {mi:miIdx('Electromagnetic waves need a medium'),
+  q:'How does the Sun\'s light reach Earth across empty space?',
+  opts:[{t:'EM waves travel through a vacuum — no medium needed',c:1},{t:'Through air all the way from the Sun',c:0},{t:'Space is not really empty, so sound carries it',c:0}],
+  feels:'All the waves we meet daily travel through something, so it feels like light must too.',
+  soc:['Between the Sun and Earth there is a vacuum. Does light still get through?',
+       'Which kind of wave needs particles to carry it — mechanical or electromagnetic?',
+       'So can light cross empty space, and what does that tell you about EM waves?']},
+ {mi:miIdx('All metals are magnetic'),
+  q:'A magnet is held near a copper coin and an iron nail. What happens?',
+  opts:[{t:'Only the iron nail is attracted',c:1},{t:'Both are attracted — they are metals',c:0},{t:'Only the copper coin is attracted',c:0}],
+  feels:'Magnets and metals go together in everyday experience, so "all metals stick" feels true.',
+  soc:['Name the metals that are actually magnetic.',
+       'Is copper one of them?',
+       'So will a magnet grab the copper coin, the iron nail, or both?']}
+);
+/* ====================== EQUATION EXPLORER (push ~18 new — full GCSE set) ====================== */
+EQS.push(
+ {id:'work',name:'Work done',form:'W = F · s',unit:'J',
+  vars:[{s:'F',label:'force',min:0,max:200,step:5,val:50,unit:'N'},{s:'s',label:'distance',min:0,max:20,step:1,val:5,unit:'m'}],
+  calc:v=>v.F*v.s,
+  insight:'Work is force times the distance moved in its direction. Push a wall (no movement) and you do zero work, however hard you strain.',
+  predict:{q:'Double the distance moved (same force). Work done will…',opts:['double','quadruple','stay the same'],a:0}},
+ {id:'power',name:'Power (energy/time)',form:'P = E / t',unit:'W',
+  vars:[{s:'E',label:'energy transferred',min:0,max:10000,step:100,val:2000,unit:'J'},{s:'t',label:'time',min:1,max:60,step:1,val:10,unit:'s'}],
+  calc:v=>v.E/v.t,
+  insight:'Power is energy transferred per second. The same job done in less time means more power — that is all "more powerful" really means.',
+  predict:{q:'Transfer the same energy in half the time. Power will…',opts:['halve','double','stay the same'],a:1}},
+ {id:'eff',name:'Efficiency',form:'efficiency = useful ÷ total',unit:'%',
+  vars:[{s:'u',label:'useful output',min:0,max:100,step:5,val:40,unit:'J'},{s:'t',label:'total input',min:10,max:100,step:5,val:100,unit:'J'}],
+  calc:v=>Math.min(v.u,v.t)/v.t*100,
+  insight:'Efficiency is the useful fraction of energy. It can never exceed 100% — the rest is dissipated, usually as heat. Real devices always waste some.',
+  predict:{q:'As useful output rises toward the total input, efficiency…',opts:['falls','rises toward 100%','stays the same'],a:1}},
+ {id:'epower',name:'Electrical power',form:'P = I · V',unit:'W',
+  vars:[{s:'I',label:'current',min:0,max:13,step:0.5,val:3,unit:'A'},{s:'V',label:'voltage',min:0,max:240,step:5,val:230,unit:'V'}],
+  calc:v=>v.I*v.V,
+  insight:'Mains power is current times voltage. High-power appliances (kettles, heaters) pull large currents, which is why they need thick cables and their own fuses.',
+  predict:{q:'Double the current at the same voltage. Power will…',opts:['double','quadruple','halve'],a:0}},
+ {id:'charge',name:'Charge flow',form:'Q = I · t',unit:'C',
+  vars:[{s:'I',label:'current',min:0,max:10,step:0.5,val:2,unit:'A'},{s:'t',label:'time',min:0,max:300,step:10,val:60,unit:'s'}],
+  calc:v=>v.I*v.t,
+  insight:'Charge delivered is current times time. A small current over a long time can move just as much charge as a big current briefly.',
+  predict:{q:'Keep the current; double the time. Charge that flows will…',opts:['double','quadruple','stay the same'],a:0}},
+ {id:'eqv',name:'Energy transferred by charge',form:'E = Q · V',unit:'J',
+  vars:[{s:'Q',label:'charge',min:0,max:100,step:5,val:20,unit:'C'},{s:'V',label:'voltage',min:0,max:12,step:0.5,val:6,unit:'V'}],
+  calc:v=>v.Q*v.V,
+  insight:'Each coulomb of charge carries V joules. More charge, or a bigger potential difference, means more energy delivered to the component.',
+  predict:{q:'Double the voltage (same charge). Energy transferred will…',opts:['double','quadruple','halve'],a:0}},
+ {id:'wave',name:'Wave speed',form:'v = f · λ',unit:'m/s',
+  vars:[{s:'f',label:'frequency',min:1,max:1000,step:10,val:200,unit:'Hz'},{s:'L',label:'wavelength',min:0.1,max:10,step:0.1,val:2,unit:'m'}],
+  calc:v=>v.f*v.L,
+  insight:'Speed is frequency times wavelength. In a single medium the speed is fixed, so a higher frequency must mean a shorter wavelength — they trade off.',
+  predict:{q:'Double the frequency at fixed wavelength. The computed wave speed will…',opts:['double','halve','stay the same'],a:0}},
+ {id:'period',name:'Period & frequency',form:'T = 1 / f',unit:'s',
+  vars:[{s:'f',label:'frequency',min:0.5,max:50,step:0.5,val:2,unit:'Hz'}],
+  calc:v=>1/v.f,
+  insight:'Period and frequency are reciprocals. 2 Hz means two cycles a second, so each cycle lasts 0.5 s. Faster frequency, shorter period.',
+  predict:{q:'Double the frequency. The period of each cycle will…',opts:['double','halve','stay the same'],a:1}},
+ {id:'density',name:'Density',form:'ρ = m / V',unit:'kg/m³',
+  vars:[{s:'m',label:'mass',min:1,max:1000,step:10,val:100,unit:'kg'},{s:'V',label:'volume',min:0.1,max:10,step:0.1,val:1,unit:'m³'}],
+  calc:v=>v.m/v.V,
+  insight:'Density is mass per unit volume — it decides floating vs sinking against a fluid, not how heavy something is overall.',
+  predict:{q:'Keep the mass; double the volume. Density will…',opts:['double','halve','stay the same'],a:1}},
+ {id:'shc',name:'Thermal energy (specific heat)',form:'ΔE = m · c · Δθ',unit:'J',
+  vars:[{s:'m',label:'mass',min:0.5,max:5,step:0.5,val:2,unit:'kg'},{s:'d',label:'temp change',min:1,max:100,step:1,val:20,unit:'°C'}],
+  calc:v=>v.m*4200*v.d,
+  insight:'With water\'s large specific heat capacity (c = 4200), even modest heating needs a lot of energy — which is why water stores heat well and moderates climate.',
+  predict:{q:'Double the temperature change (same mass). Energy needed will…',opts:['double','quadruple','halve'],a:0}},
+ {id:'latent',name:'Latent heat',form:'E = m · L',unit:'J',
+  vars:[{s:'m',label:'mass',min:0.1,max:5,step:0.1,val:1,unit:'kg'},{s:'L',label:'latent heat',min:100000,max:2500000,step:100000,val:334000,unit:'J/kg'}],
+  calc:v=>v.m*v.L,
+  insight:'Latent heat is energy to change state with NO temperature change. It is huge — which is why steam at 100 °C scalds far worse than water at 100 °C.',
+  predict:{q:'Double the mass changing state. Energy required will…',opts:['double','quadruple','stay the same'],a:0}},
+ {id:'hooke',name:'Hooke\'s law',form:'F = k · e',unit:'N',
+  vars:[{s:'k',label:'spring constant',min:1,max:100,step:1,val:20,unit:'N/m'},{s:'e',label:'extension',min:0,max:0.5,step:0.01,val:0.1,unit:'m'}],
+  calc:v=>v.k*v.e,
+  insight:'Within the limit of proportionality, force is proportional to extension. A stiffer spring (bigger k) needs more force for the same stretch.',
+  predict:{q:'Double the extension (same spring). Force needed will…',opts:['double','quadruple','halve'],a:0}},
+ {id:'epe',name:'Elastic potential energy',form:'Eₑ = ½ · k · e²',unit:'J',
+  vars:[{s:'k',label:'spring constant',min:1,max:100,step:1,val:20,unit:'N/m'},{s:'e',label:'extension',min:0,max:0.5,step:0.01,val:0.1,unit:'m'}],
+  calc:v=>0.5*v.k*v.e*v.e,
+  insight:'Extension is squared: stretch twice as far and you store four times the energy. This is why a fully drawn bow holds so much more energy than a half-drawn one.',
+  predict:{q:'Double the extension. Stored elastic energy will…',opts:['double','quadruple','halve'],a:1}},
+ {id:'moment',name:'Moment (turning effect)',form:'M = F · d',unit:'N·m',
+  vars:[{s:'F',label:'force',min:0,max:200,step:5,val:40,unit:'N'},{s:'d',label:'distance from pivot',min:0,max:2,step:0.1,val:0.5,unit:'m'}],
+  calc:v=>v.F*v.d,
+  insight:'Turning effect grows with distance from the pivot — which is why a longer spanner, or pushing a door far from its hinge, makes turning so much easier.',
+  predict:{q:'Double the distance from the pivot. The moment will…',opts:['double','quadruple','stay the same'],a:0}},
+ {id:'pressure',name:'Pressure',form:'P = F / A',unit:'Pa',
+  vars:[{s:'F',label:'force',min:0,max:1000,step:10,val:500,unit:'N'},{s:'A',label:'area',min:0.001,max:1,step:0.001,val:0.01,unit:'m²'}],
+  calc:v=>v.F/v.A,
+  insight:'The same force on a smaller area gives far higher pressure — the principle behind drawing pins, knife edges, and why snowshoes spread weight to stop you sinking.',
+  predict:{q:'Halve the contact area (same force). Pressure will…',opts:['halve','double','stay the same'],a:1}},
+ {id:'liquidp',name:'Pressure in a liquid',form:'p = h · ρ · g',unit:'Pa',
+  vars:[{s:'h',label:'depth',min:0,max:50,step:1,val:10,unit:'m'},{s:'r',label:'liquid density',min:500,max:1500,step:50,val:1000,unit:'kg/m³'}],
+  calc:v=>v.h*v.r*9.8,
+  insight:'Pressure rises with depth because more liquid weighs down from above — which is why dam walls are thicker at the bottom and deep dives need protection.',
+  predict:{q:'Double the depth. Liquid pressure will…',opts:['double','quadruple','stay the same'],a:0}},
+ {id:'mom',name:'Momentum',form:'p = m · v',unit:'kg·m/s',
+  vars:[{s:'m',label:'mass',min:1,max:2000,step:10,val:1000,unit:'kg'},{s:'v',label:'velocity',min:0,max:40,step:1,val:10,unit:'m/s'}],
+  calc:v=>v.m*v.v,
+  insight:'Momentum bundles mass and velocity. A lorry has enormous momentum even at low speed, which is why it needs a large force or a long time to stop.',
+  predict:{q:'Double the velocity (same mass). Momentum will…',opts:['double','quadruple','halve'],a:0}},
+ {id:'accel',name:'Acceleration',form:'a = Δv / t',unit:'m/s²',
+  vars:[{s:'d',label:'change in velocity',min:0,max:50,step:1,val:20,unit:'m/s'},{s:'t',label:'time taken',min:0.1,max:20,step:0.1,val:5,unit:'s'}],
+  calc:v=>v.d/v.t,
+  insight:'Acceleration is the change in velocity per second. The same speed gain achieved in less time is a bigger acceleration — and needs a bigger force.',
+  predict:{q:'Same change in velocity, but over half the time. Acceleration will…',opts:['halve','double','stay the same'],a:1}}
+);
+/* ====================== COUNTERFACTUALS (push ~18 new) ====================== */
+CF.push(
+ {topic:'Electricity',o:'A bulb is connected in a simple series circuit and glows.',f:'What if you doubled the supply voltage?',r:'Current rises (I = V/R), so the bulb glows brighter and dissipates more power (P = IV). Push it too far and the filament overheats and blows.'},
+ {topic:'Electricity',o:'Two bulbs are in series and glow dimly.',f:'What if a third identical bulb were added in series?',r:'Total resistance rises again, so the current falls further and all three glow even more dimly. Series sharing means more components = less for each.'},
+ {topic:'Electricity',o:'A wire carries a steady current and warms up slightly.',f:'What if you replaced it with a much thinner wire?',r:'Thinner means higher resistance, so for the same current it dissipates more power (P = I²R) and gets hotter — the principle behind a fuse melting to break the circuit.'},
+ {topic:'Particle model',o:'A balloon sits at room temperature, full and firm.',f:'What if you put it in the freezer?',r:'The particles slow and hit the walls less hard and less often, so the pressure drops and the balloon shrinks — even though no air escaped.'},
+ {topic:'Particle model',o:'A sealed syringe of gas is at a fixed temperature.',f:'What if you pushed the plunger to halve the volume?',r:'The same particles hit a smaller area more often, so the pressure roughly doubles (at constant temperature) — Boyle\'s-law behaviour you can feel in your hand.'},
+ {topic:'Particle model',o:'A metal spoon and a wooden spoon sit in hot soup.',f:'What if you swapped which one you held?',r:'The metal feels far hotter because it conducts thermal energy to your hand quickly; wood is a poor conductor, so it feels cooler at the same temperature.'},
+ {topic:'Radioactivity',o:'A source has a half-life of 6 hours.',f:'What if you heated it, cooled it, or crushed it?',r:'Nothing changes. Radioactive decay is a nuclear property, unaffected by temperature, pressure, or chemistry — you cannot speed it up or slow it down.'},
+ {topic:'Radioactivity',o:'An alpha source sits safely in a sealed container on a bench.',f:'What if it were swallowed instead?',r:'Outside the body alpha is stopped by skin and is least dangerous; inside, its intense ionisation makes it the most dangerous. The danger flips entirely with location.'},
+ {topic:'Forces',o:'A car cruises along a flat motorway at steady speed with the engine on.',f:'What if all friction and air resistance vanished?',r:'It would keep moving at constant velocity with the engine off (Newton\'s first law). The engine normally exists only to cancel friction and drag, not to "maintain motion".'},
+ {topic:'Forces',o:'A skydiver reaches terminal velocity in the atmosphere.',f:'What if they fell on the airless Moon instead?',r:'With no air there is no drag, so there is no terminal velocity — they accelerate the whole way down at the Moon\'s lower g, never settling to a steady speed.'},
+ {topic:'Forces',o:'A see-saw balances with a child on each side.',f:'What if one child slid closer to the pivot?',r:'Their moment (force × distance) shrinks, so that side rises — balance is lost. To rebalance, either add force or move back out, restoring equal moments.'},
+ {topic:'Forces',o:'A drawing pin is pushed into a board, point first.',f:'What if you pushed it the other way, head first?',r:'The large flat head spreads the same force over a big area, so the pressure is far too low to pierce — same force, very different pressure (P = F/A).'},
+ {topic:'Motion',o:'A passenger sits still in a car moving at a steady speed.',f:'What if the driver suddenly braked hard?',r:'The passenger keeps moving forward (inertia) until the seatbelt provides the backward force to stop them — which is exactly why seatbelts exist.'},
+ {topic:'Waves',o:'A ray of light passes from air into glass, slowing and bending.',f:'What if it travelled from glass back into air?',r:'It speeds up and bends away from the normal. Beyond a critical angle it cannot escape at all — total internal reflection, the basis of optical fibres.'},
+ {topic:'Waves',o:'You hear a friend speak across a room.',f:'What if all the air were removed from the room?',r:'You would hear nothing. Sound is a mechanical wave needing particles to carry it; in a vacuum there is no medium, so it cannot travel — though you would still see them fine.'},
+ {topic:'Magnetism',o:'A current flows through a wire between two magnet poles and it jumps one way.',f:'What if you reversed the current direction?',r:'The force reverses, so the wire jumps the opposite way (Fleming\'s left-hand rule). Reversing the magnetic poles would do the same — this switching is how motors keep turning.'},
+ {topic:'Magnetism',o:'A transformer steps mains AC down to a lower voltage.',f:'What if you fed it steady DC instead?',r:'It would not work. Transformers need a CHANGING magnetic field to induce a voltage in the second coil; steady DC produces no change, so no output (and the coil may overheat).'},
+ {topic:'Space',o:'Earth orbits the Sun with its axis tilted, giving seasons.',f:'What if Earth\'s axis were not tilted at all?',r:'Seasons would essentially vanish — every place would get roughly the same sunlight year-round. Seasons come from the tilt, not from distance to the Sun.'}
+);
+
+/* ====================== MENTAL MODELS (push ~10 new) ====================== */
+MODELS.push(
+ {c:'Static electricity',topic:'Electricity',
+  model:'Rubbing transfers electrons between insulators, leaving one positively and one negatively charged. Like charges repel, opposites attract, and the build-up discharges as a spark when it finds a path to earth.',
+  wrong:['Charge is created by rubbing.','Both objects gain the same charge.'],
+  predict:['A balloon rubbed on hair sticks to a wall (induced opposite charge).','A charged rod deflects a thin stream of water.','You feel a shock touching metal after walking on carpet.'],
+  bound:['Only electrons move; protons stay put.','Conductors let charge flow away, so static builds only on insulators (or isolated conductors).'],
+  ex:['Lightning is static discharge on a vast scale.','Anti-static straps protect electronics from sudden discharge.']},
+ {c:'Radioactive decay & half-life',topic:'Radioactivity',
+  model:'Unstable nuclei decay at random, but in bulk the rate is precise. Half-life is the time for half the remaining nuclei to decay, so the amount halves repeatedly and approaches — but never cleanly reaches — zero.',
+  wrong:['Decay is predictable for each individual nucleus.','After two half-lives nothing is left.'],
+  predict:['100% → 50% → 25% → 12.5% over equal time steps.','Heating or crushing the sample changes nothing.','Activity (counts per second) falls in step with the amount remaining.'],
+  bound:['Half-life describes populations, not single atoms.','Irradiation is not contamination — exposure does not usually make things radioactive.'],
+  ex:['Carbon-14 dating of ancient remains.','Choosing isotopes by half-life for medical tracers.']},
+ {c:'Thermal energy & specific heat',topic:'Particle model',
+  model:'Temperature is the average kinetic energy per particle; thermal energy is the total. Specific heat capacity is how much energy one kilogram needs to warm by one degree — large for water, small for metals.',
+  wrong:['Hotter always means more energy.','All materials heat up at the same rate.'],
+  predict:['Water heats and cools slowly (high c), moderating climates.','A metal pan heats fast (low c) while its water stays cooler.','Doubling the mass doubles the energy needed for the same temperature rise.'],
+  bound:['During a change of state, energy goes to latent heat and temperature pauses.','Heat always flows hot → cold; "cold" never flows.'],
+  ex:['Hot-water bottles stay warm for hours.','Coastal areas have milder temperature swings than inland.']},
+ {c:'Momentum & collisions',topic:'Forces',
+  model:'Momentum (mass × velocity) is conserved in every collision because the forces between objects are equal and opposite and act for the same time. Spreading a collision over more time reduces the peak force.',
+  wrong:['Kinetic energy is always conserved in collisions.','A heavier object always "wins" regardless of speed.'],
+  predict:['Two trolleys that stick together move off slower (momentum shared).','An airbag lowers the force by extending the stopping time.','Recoil: a fired gun kicks back as the bullet goes forward.'],
+  bound:['Only momentum is always conserved; kinetic energy is lost in inelastic collisions.','Needs a closed system — no external forces like strong friction.'],
+  ex:['Crumple zones extend crash time to cut force.','Rockets gain momentum by expelling exhaust.']},
+ {c:'Pressure in fluids',topic:'Pressure',
+  model:'In a gas, pressure is countless particle impacts per second on the walls. In a liquid, pressure also grows with depth as the weight of fluid above presses down. Pressure differences push; nothing ever "sucks".',
+  wrong:['A vacuum pulls things in.','Pressure and force are the same.'],
+  predict:['Heating a sealed gas raises its pressure (harder, more frequent impacts).','A dam wall must be thickest at the bottom.','A straw works because atmospheric pressure pushes the drink up.'],
+  bound:['Liquid pressure depends on depth and density, not the container\'s shape.','Reframe all "suction" as higher pressure pushing.'],
+  ex:['Ears pop as air pressure changes with altitude.','Hydraulic brakes transmit pressure through fluid.']},
+ {c:'Magnetic fields & the motor effect',topic:'Magnetism',
+  model:'A magnet (or a current-carrying wire) is surrounded by a field running north to south. When a current flows across a magnetic field, the wire feels a force — the motor effect — whose direction follows Fleming\'s left-hand rule.',
+  wrong:['All metals are magnetic.','A steady current near a magnet does nothing.'],
+  predict:['A wire between magnet poles jumps when current flows.','Reversing the current or the field reverses the force.','Stronger current or field gives a bigger force.'],
+  bound:['Only iron, steel, nickel and cobalt are magnetic.','The force needs the current to cross the field, not run along it.'],
+  ex:['Electric motors and loudspeakers.','Maglev trains using powerful electromagnets.']},
+ {c:'Electromagnetic induction',topic:'Magnetism',
+  model:'A CHANGING magnetic field through a coil induces a voltage (and current if the circuit is complete). Move a magnet, spin a coil, or change a current nearby — the change is what matters. This runs generators and transformers.',
+  wrong:['A stationary magnet in a coil induces a current.','Transformers work on direct current.'],
+  predict:['Pushing a magnet in and out of a coil flicks a meter back and forth.','Spinning a coil in a field generates AC.','A transformer changes AC voltage by its turns ratio but does nothing with steady DC.'],
+  bound:['No change, no induction — motion or a changing current is essential.','Transformers need AC; ideal ones conserve power (VₚIₚ = VₛIₛ).'],
+  ex:['Power-station generators.','Phone chargers and the national grid.']},
+ {c:'The electromagnetic spectrum',topic:'Waves',
+  model:'Radio, microwave, infrared, visible, ultraviolet, X-ray and gamma are all the same kind of transverse EM wave, differing only in frequency and wavelength. All travel at the speed of light through a vacuum; energy rises with frequency.',
+  wrong:['EM waves need a medium.','Red light has more energy than blue.'],
+  predict:['Higher frequency (toward gamma) means more energy and more damage to cells.','All EM waves cross empty space at the same speed.','Radio (long wavelength) diffracts around obstacles; visible light mostly does not.'],
+  bound:['Only EM waves cross a vacuum; sound (mechanical) cannot.','Frequency, not "warm colour", sets energy.'],
+  ex:['Microwaves heat food; X-rays image bones; UV causes sunburn.','Infrared cameras see heat.']},
+ {c:'Stopping distances',topic:'Forces',
+  model:'Total stopping distance = thinking distance (during reaction time) + braking distance (while decelerating). Thinking distance grows with speed; braking distance grows with the square of speed, because kinetic energy (½mv²) scales with v².',
+  wrong:['Braking distance grows in proportion to speed.','Reaction time gets shorter at higher speed.'],
+  predict:['Doubling speed roughly quadruples braking distance.','Tiredness, alcohol or distraction lengthen thinking distance.','Wet or icy roads and worn tyres lengthen braking distance.'],
+  bound:['Reaction time is roughly fixed; speed scales the distance travelled during it.','The squared term comes from the kinetic energy that brakes must remove.'],
+  ex:['Speed-limit choices near schools.','Tailgating leaves no room for thinking + braking distance.']},
+ {c:'Orbits & gravity',topic:'Space',
+  model:'Gravity provides the centripetal force that bends a satellite\'s path into an orbit. The satellite is in continuous free fall — moving sideways fast enough that it keeps missing the planet — so everything inside floats.',
+  wrong:['There is no gravity in space.','Satellites need constant thrust to stay up.'],
+  predict:['Astronauts float because they fall with the station, not because gravity is gone.','A faster sideways speed gives a higher, wider orbit.','Cut the speed and the orbit decays — the craft spirals in.'],
+  bound:['Orbits need the right sideways speed for the altitude.','Air drag in low orbits slowly removes energy, so orbits decay over time.'],
+  ex:['The ISS and communication satellites.','The Moon orbiting Earth.']}
+);
+
 /* ============ render engine ============ */
 let current='overview';
 function fillHosts(){
@@ -1699,6 +2783,7 @@ function buildNav(){
 function go(id,noscroll){
   if(!SEC[id])return;current=id;
   stopSandbox();
+  if(id==='lens')lensPick=null;
   document.getElementById('content').innerHTML=`<section class="on">${helpBanner(id)}${SEC[id]()}</section>`;
   document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.id===id));
   fillHosts();
@@ -1708,6 +2793,8 @@ function go(id,noscroll){
   if(id==='explorer'){loadEx();renderEx()}
   if(id==='counterfactual'){cfIdx=0;cfShown=false;renderCF()}
   if(id==='sandbox'){requestAnimationFrame(startSandbox)}
+  if(id==='contrast'){contIdx=0;renderContrast()}
+  if(id==='models'){renderModels()}
   if(window.innerWidth<=860){document.getElementById('side').classList.remove('show');document.getElementById('scrim').classList.remove('show')}
   if(!noscroll)window.scrollTo({top:0,behavior:'instant'in window?'instant':'auto'});
   try{history.replaceState(null,'','#'+id)}catch(e){}
@@ -1718,6 +2805,7 @@ function toggleNav(){document.getElementById('side').classList.toggle('show');do
 buildNav();
 const start=(location.hash||'').replace('#','');
 go(SEC[start]?start:'dashboard');
+if(!store.get('onboarded',false)){showOnboard()}
 </script>
 </body>
 </html>
