@@ -1,0 +1,14 @@
+{
+  "name": "Relearning Physics",
+  "short_name": "Physics",
+  "description": "A working method for relearning GCSE physics — diagnose, repair, retain. Tailored to Edexcel and AQA.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#E7EAEC",
+  "theme_color": "#161B2E",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}
