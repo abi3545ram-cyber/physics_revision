@@ -1,8 +1,15 @@
 /* ============ persistence (safe: falls back to memory if storage blocked) ============ */
 const mem={};
+/* keys kept global (shared across every account on this device) */
+const GLOBAL_KEYS=new Set(['__accounts','__active','__snaps']);
+function _activeId(){try{const v=localStorage.getItem('__active');return v==null?(mem['__active']||null):JSON.parse(v)}catch(e){return mem['__active']||null}}
+function _nskey(k){return GLOBAL_KEYS.has(k)?k:('u:'+(_activeId()||'guest')+':'+k)}
 const store={
-  get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return mem[k]!=null?mem[k]:d}},
-  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){mem[k]=v}}
+  get(k,d){const kk=_nskey(k);try{const v=localStorage.getItem(kk);return v==null?(mem[kk]!=null?mem[kk]:d):JSON.parse(v)}catch(e){return mem[kk]!=null?mem[kk]:d}},
+  set(k,v){const kk=_nskey(k);try{localStorage.setItem(kk,JSON.stringify(v))}catch(e){mem[kk]=v}},
+  del(k){const kk=_nskey(k);try{localStorage.removeItem(kk)}catch(e){}delete mem[kk]},
+  rawGet(kk,d){try{const v=localStorage.getItem(kk);return v==null?(mem[kk]!=null?mem[kk]:d):JSON.parse(v)}catch(e){return mem[kk]!=null?mem[kk]:d}},
+  rawKeys(){try{return Object.keys(localStorage)}catch(e){return Object.keys(mem)}}
 };
 const uid=()=>Math.random().toString(36).slice(2,9);
 const todayISO=()=>new Date().toISOString().slice(0,10);
@@ -11,9 +18,12 @@ const fmtDate=s=>{if(!s)return'';const d=new Date(s);return d.toLocaleDateString
 
 /* ============ nav structure ============ */
 const NAV=[
+  {grp:'You'},
+  {id:'account', n:'◐', t:'Account'},
+  {id:'students', n:'◍', t:'My students', teacherOnly:true},
   {grp:'Tutorial'},
   {id:'tutorial', n:'◆', t:'How to use this app'},
-  {id:'spec', n:'◇', t:'Edexcel spec coverage'},
+  {id:'spec', n:'◇', t:'Spec coverage'},
   {grp:'Start here'},
   {id:'dashboard', n:'★', t:'Dashboard'},
   {id:'plan',      n:'▶', t:"Today's plan"},
@@ -3068,6 +3078,530 @@ SEC.resources=()=>`
   <p class="muted" style="font-size:.86rem">Everything you log in this app — error entries, scheduled reviews, transfer scenarios, spec confidence tags — is saved in your own browser only. Nothing leaves the page.</p>
 `;
 
+/* ====================================================================
+   VERSION 7 — ACCOUNTS, FIRST-RUN WIZARD & TEACHER (MASTER) DASHBOARD
+   Local, no-backend accounts. Each account's data is namespaced in the
+   store. A teacher account sees every account on this device plus any
+   student progress snapshots imported via a share code.
+   ==================================================================== */
+
+/* ---------- accounts registry ---------- */
+function getAccounts(){return store.get('__accounts',[])}
+function setAccounts(a){store.set('__accounts',a)}
+function activeId(){return store.get('__active',null)}
+function currentAccount(){const id=activeId();return getAccounts().find(a=>a.id===id)||null}
+function setActive(id){store.set('__active',id)}
+function getSnaps(){return store.get('__snaps',[])}
+function setSnaps(s){store.set('__snaps',s)}
+function createAccount(d){const a=getAccounts();
+  const acc={id:uid(),name:(d.name||'Student').trim(),role:d.role||'student',year:d.year||'',board:d.board||'Edexcel (1PH0)',goal:d.goal||'',created:todayISO()};
+  a.push(acc);setAccounts(a);return acc;}
+function updateAccount(id,patch){const a=getAccounts();const x=a.find(y=>y.id===id);if(x){Object.assign(x,patch);setAccounts(a)}}
+function deleteAccount(id){setAccounts(getAccounts().filter(y=>y.id!==id));
+  store.rawKeys().filter(k=>k.indexOf('u:'+id+':')===0).forEach(k=>{try{localStorage.removeItem(k)}catch(e){}delete mem[k]});}
+function acctRead(id,key,d){return store.rawGet('u:'+id+':'+key,d)}
+
+/* migrate any pre-accounts (un-namespaced) data into the first account */
+function migrateLegacy(newId){
+  store.rawKeys().filter(k=>k.indexOf('u:')!==0&&!GLOBAL_KEYS.has(k)&&k.indexOf('__')!==0).forEach(k=>{
+    try{const v=localStorage.getItem(k);if(v!=null){localStorage.setItem('u:'+newId+':'+k,v);localStorage.removeItem(k)}}catch(e){}
+  });
+}
+
+/* sync the spec board toggle + profile to the active account */
+function syncBoardFromAccount(){const acc=currentAccount();if(acc){if(!getProfile().board)setProfile('board',acc.board);}
+  specBoard=((getProfile().board||(acc&&acc.board)||'').toUpperCase().includes('AQA'))?'aqa':'edexcel';}
+function switchAccount(id){setActive(id);syncBoardFromAccount();buildNav();go('dashboard');}
+
+/* ---------- first-run wizard ---------- */
+const YEARS=['Year 9','Year 10','Year 11','Year 12 / 13 (A-level)','Adult / re-learner'];
+const BOARDS=['Edexcel (1PH0)','Edexcel Combined (1SC0)','AQA (8463)','OCR','Other / not sure'];
+const GOALS=['Pass','Grade 5','Grade 7','Grade 9 / A*','Deep understanding'];
+let wiz={step:0,role:null,name:'',year:'',board:'Edexcel (1PH0)',goal:''};
+function showWizard(add){wiz={step:0,role:add?'student':null,name:'',year:'',board:'Edexcel (1PH0)',goal:'',add:!!add};
+  let o=document.getElementById('wizard');if(!o){o=document.createElement('div');o.id='wizard';document.body.appendChild(o);}
+  o.style.display='flex';renderWizard();}
+function hideWizard(){const o=document.getElementById('wizard');if(o)o.style.display='none';}
+function wizSet(k,v){wiz[k]=v;renderWizard();}
+function wizName(v){wiz.name=v;}
+function wizCanNext(){if(wiz.step===0)return!!wiz.role;if(wiz.step===1)return wiz.name.trim().length>0;return true;}
+function wizNext(){const nm=document.getElementById('wizNameInput');if(nm)wiz.name=nm.value;
+  if(!wizCanNext())return;
+  const last=wizLastStep();
+  if(wiz.step>=last){finishWizard();return}
+  wiz.step++;renderWizard();}
+function wizBack(){if(wiz.step>0){wiz.step--;renderWizard()}}
+function wizLastStep(){return wiz.role==='teacher'?2:3;} // teacher: role,name,board ; student: role,name,year+board,goal
+function finishWizard(){
+  const first=!getAccounts().length;
+  const acc=createAccount({name:wiz.name,role:wiz.role,year:wiz.year,board:wiz.board,goal:wiz.goal});
+  setActive(acc.id);
+  if(first)migrateLegacy(acc.id);
+  // seed this account's profile
+  setProfile('board',wiz.board);
+  setProfile('level', wiz.year.indexOf('A-level')>=0?'A-level':(wiz.role==='teacher'?'GCSE':'GCSE'));
+  if(wiz.goal)setProfile('goal',wiz.goal);
+  syncBoardFromAccount();recordActivity();
+  hideWizard();buildNav();
+  // land somewhere friendly (not straight into the tutorial)
+  go('dashboard');
+  showWelcomeToast(acc);
+}
+function showWelcomeToast(acc){/* gentle nudge to the tour, shown on the dashboard */
+  const c=document.getElementById('content');if(!c)return;
+  const note=document.createElement('div');note.className='wtoast';
+  note.innerHTML=`<div><strong>Welcome, ${esc(acc.name)}.</strong> ${acc.role==='teacher'?'Your <a onclick="go(\'students\')">students dashboard</a> is in the sidebar.':'New here? Take the 90-second tour of how the method works.'}</div>
+    <div style="display:flex;gap:8px;flex-shrink:0">${acc.role!=='teacher'?'<button class="btn amber sm" onclick="this.closest(\'.wtoast\').remove();showOnboard()">Take the tour</button>':''}<button class="btn ghost sm" onclick="this.closest('.wtoast').remove()">Dismiss</button></div>`;
+  c.prepend(note);
+}
+function renderWizard(){const o=document.getElementById('wizard');if(!o)return;
+  const total=wiz.role==='teacher'?3:4;
+  const dots=Array.from({length:total}).map((_,i)=>`<span class="${i===wiz.step?'on':''}"></span>`).join('');
+  let body='';
+  if(wiz.step===0){
+    body=`<div class="weyebrow">Welcome to</div>
+      <div class="wbrand"><img src="logo.svg" width="40" height="40" style="border-radius:9px"> Relearning <b>Physics</b></div>
+      <p class="wsub">A working method for relearning physics — it diagnoses what's actually wrong, rebuilds the idea, and schedules the comeback. First, who are you?</p>
+      <div class="wopts">
+        <button class="wbig ${wiz.role==='student'?'sel':''}" onclick="wizSet('role','student')"><span class="wbi">🎓</span><span><strong>I'm a student</strong><small>Learn and track my own progress</small></span></button>
+        <button class="wbig ${wiz.role==='teacher'?'sel':''}" onclick="wizSet('role','teacher')"><span class="wbi">🧑‍🏫</span><span><strong>I'm a teacher</strong><small>Create student accounts and see how they're doing</small></span></button>
+      </div>`;
+  } else if(wiz.step===1){
+    body=`<div class="weyebrow">${wiz.role==='teacher'?'Teacher account':'Student account'}</div>
+      <h3 class="wh">What's your name?</h3>
+      <p class="wsub">This is just a label on this device — it personalises your dashboard.</p>
+      <input id="wizNameInput" class="winput" placeholder="${wiz.role==='teacher'?'e.g. Mr Patel':'e.g. Alex'}" value="${esc(wiz.name)}" oninput="wizName(this.value)" onkeydown="if(event.key==='Enter')wizNext()" autofocus>`;
+  } else if(wiz.step===2 && wiz.role!=='teacher'){
+    body=`<div class="weyebrow">A bit about your course</div>
+      <h3 class="wh">Year &amp; exam board</h3>
+      <div class="weyebrow" style="margin:14px 0 6px">Year</div>
+      <div class="wgrid">${YEARS.map(y=>`<button class="wchip ${wiz.year===y?'sel':''}" onclick="wizSet('year','${y}')">${y}</button>`).join('')}</div>
+      <div class="weyebrow" style="margin:16px 0 6px">Exam board</div>
+      <div class="wgrid">${BOARDS.map(b=>`<button class="wchip ${wiz.board===b?'sel':''}" onclick="wizSet('board','${b}')">${b}</button>`).join('')}</div>`;
+  } else if(wiz.step===2 && wiz.role==='teacher'){
+    body=`<div class="weyebrow">Your class</div>
+      <h3 class="wh">Default exam board</h3>
+      <p class="wsub">The board new student accounts start on. You can change it per student later.</p>
+      <div class="wgrid">${BOARDS.map(b=>`<button class="wchip ${wiz.board===b?'sel':''}" onclick="wizSet('board','${b}')">${b}</button>`).join('')}</div>`;
+  } else if(wiz.step===3){
+    body=`<div class="weyebrow">Last thing</div>
+      <h3 class="wh">What are you aiming for?</h3>
+      <p class="wsub">This tailors your plan and the tutor's diagnosis. You can change it anytime.</p>
+      <div class="wgrid">${GOALS.map(g=>`<button class="wchip ${wiz.goal===g?'sel':''}" onclick="wizSet('goal','${g}')">${g}</button>`).join('')}</div>`;
+  }
+  const isLast=wiz.step>=wizLastStep();
+  o.innerHTML=`<div class="onb-card wizcard">
+    <div class="onb-dots">${dots}</div>
+    ${body}
+    <div class="onb-nav">
+      ${wiz.add?`<button class="btn ghost sm" onclick="hideWizard()">Cancel</button>`:`<span></span>`}
+      <div style="display:flex;gap:8px">
+        ${wiz.step>0?`<button class="btn sm" onclick="wizBack()">Back</button>`:''}
+        <button class="btn amber sm" onclick="wizNext()" ${wizCanNext()?'':'disabled style="opacity:.5"'}>${isLast?(wiz.add?'Create account':'Finish setup'):'Next'}</button>
+      </div>
+    </div></div>`;
+  const nm=document.getElementById('wizNameInput');if(nm){nm.focus();nm.setSelectionRange(nm.value.length,nm.value.length);}
+}
+/* ---------- per-student stats (works for a local account or an imported snapshot) ---------- */
+function statGetter(id,source){
+  if(source==='snap'){const s=getSnaps().find(x=>x.id===id);return (k,d)=>{const v=s&&s.data?s.data[k]:undefined;return (v===undefined||v===null)?d:v}}
+  return (k,d)=>acctRead(id,k,d);
+}
+function statsFor(getter){
+  const log=getter('errorLog',[])||[],sr=getter('srItems',[])||[],rag=getter('specRAG',{})||{},days=getter('activityDays',[])||[];
+  const t=todayISO();
+  const counts={};Object.keys(TYPE_META).forEach(k=>counts[k]=0);log.forEach(e=>{if(counts[e.type]!=null)counts[e.type]++});
+  const dom=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+  const due=sr.filter(x=>x.due<=t).length;
+  let streak=0,d=new Date();const sset=new Set(days);
+  for(;;){const iso=d.toISOString().slice(0,10);if(sset.has(iso)){streak++;d.setDate(d.getDate()-1)}else if(streak===0&&iso===t){d.setDate(d.getDate()-1)}else break;}
+  const rags={r:0,a:0,g:0};Object.values(rag).forEach(v=>{if(rags[v]!=null)rags[v]++});
+  const m={};log.forEach(e=>{const k=e.topic||'—';m[k]=m[k]||{n:0,concept:0};m[k].n++;if(e.type==='concept')m[k].concept++});
+  const weak=Object.entries(m).map(([k,v])=>({topic:k,...v})).sort((a,b)=>b.n-a.n).slice(0,4);
+  return {gaps:log.length,counts,dom:(dom&&dom[1]>0)?dom[0]:null,due,streak,rags,last:days.length?days.slice().sort().slice(-1)[0]:null,weak,log,sr};
+}
+
+/* ---------- share codes (export / import) ---------- */
+function b64enc(s){try{return btoa(unescape(encodeURIComponent(s)))}catch(e){return ''}}
+function b64dec(s){try{return decodeURIComponent(escape(atob(s.trim())))}catch(e){return ''}}
+function exportProgress(id){const acc=getAccounts().find(a=>a.id===id);if(!acc)return'';
+  const data={};store.rawKeys().filter(k=>k.indexOf('u:'+id+':')===0).forEach(k=>{const bare=k.slice(('u:'+id+':').length);try{data[bare]=JSON.parse(localStorage.getItem(k))}catch(e){}});
+  return b64enc(JSON.stringify({v:1,meta:{name:acc.name,role:acc.role,year:acc.year,board:acc.board,exported:new Date().toISOString()},data}));
+}
+function downloadText(name,text){try{const b=new Blob([text],{type:'text/plain'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);}catch(e){}}
+function copyShare(id){const code=exportProgress(id);const ta=document.getElementById('shareBox');if(ta){ta.value=code;ta.select();try{document.execCommand('copy')}catch(e){}}
+  const s=document.getElementById('shareMsg');if(s)s.textContent='Copied — paste it to your teacher, or use Download.';}
+function downloadShare(id){const acc=getAccounts().find(a=>a.id===id);downloadText('physics-progress-'+(acc?acc.name.replace(/\s+/g,'-'):'student')+'.txt',exportProgress(id));}
+function importSnapshot(){const code=(document.getElementById('importBox')||{}).value||'';const json=b64dec(code);
+  const msg=document.getElementById('importMsg');
+  if(!json){if(msg)msg.textContent='That code could not be read. Copy the whole thing and try again.';return}
+  let obj;try{obj=JSON.parse(json)}catch(e){if(msg){msg.textContent='That code is not valid.';}return}
+  if(!obj||!obj.data){if(msg)msg.textContent='That code does not contain progress data.';return}
+  const snaps=getSnaps();snaps.unshift({id:uid(),name:(obj.meta&&obj.meta.name)||'Student',year:(obj.meta&&obj.meta.year)||'',board:(obj.meta&&obj.meta.board)||'',importedAt:todayISO(),exported:(obj.meta&&obj.meta.exported)||'',data:obj.data});
+  setSnaps(snaps);if(msg)msg.textContent='Imported ✓';go('students',true);
+}
+function deleteSnap(id){setSnaps(getSnaps().filter(s=>s.id!==id));go('students',true)}
+
+/* ---------- Account page (everyone) ---------- */
+SEC.account=()=>{const acc=currentAccount();if(!acc)return'<p class="lead">No account yet.</p>';
+  const others=getAccounts().filter(a=>a.id!==acc.id);
+  return `
+  <div class="eyebrow">You</div>
+  <h2 class="h-sec">Account</h2>
+  <p class="lead">Your profile on this device. ${acc.role==='teacher'?'As a teacher you can add student accounts and review them in <a onclick="go(\'students\')">My students</a>.':'Switch profiles, update your details, or share your progress with a teacher.'}</p>
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:14px">
+      <span class="acctav big">${esc(acc.name.slice(0,1).toUpperCase())}</span>
+      <div><div style="font-weight:700;font-size:1.1rem">${esc(acc.name)}</div>
+      <div class="muted" style="font-size:.9rem">${acc.role==='teacher'?'Teacher':esc(acc.year||'Student')}${acc.role!=='teacher'?' · '+esc(acc.board):''}</div></div>
+    </div>
+    ${acc.role!=='teacher'?`<div class="eyebrow" style="margin:16px 0 6px">Exam board</div>
+      <div class="opts" style="flex-direction:row;flex-wrap:wrap">${BOARDS.map(b=>`<button class="opt ${acc.board===b?'sel':''}" style="flex:1;justify-content:center;min-width:130px" onclick="updateAccount('${acc.id}',{board:'${b}'});setProfile('board','${b}');syncBoardFromAccount();go('account',true)">${b}</button>`).join('')}</div>
+      <div class="eyebrow" style="margin:16px 0 6px">Goal</div>
+      <div class="opts" style="flex-direction:row;flex-wrap:wrap">${GOALS.map(g=>`<button class="opt ${(getProfile().goal)===g?'sel':''}" style="flex:1;justify-content:center;min-width:110px" onclick="setProfile('goal','${g}');updateAccount('${acc.id}',{goal:'${g}'});go('account',true)">${g}</button>`).join('')}</div>`:''}
+  </div>
+
+  ${acc.role!=='teacher'?`<div class="card" style="margin-top:14px">
+    <h4 style="margin:0 0 4px">Share my progress with a teacher</h4>
+    <p class="muted" style="font-size:.9rem;margin:0 0 10px">Copy this code (or download it) and send it to your teacher. It's a private snapshot — they import it to see how you're doing. Re-send any time to update them.</p>
+    <textarea id="shareBox" class="winput" style="height:80px;font-family:'IBM Plex Mono';font-size:.7rem" readonly onclick="this.select()">${exportProgress(acc.id)}</textarea>
+    <div style="display:flex;gap:8px;margin-top:8px"><button class="btn amber sm" onclick="copyShare('${acc.id}')">Copy code</button><button class="btn sm" onclick="downloadShare('${acc.id}')">Download file</button></div>
+    <div id="shareMsg" class="mono" style="font-size:.78rem;color:var(--rest);margin-top:8px"></div>
+  </div>`:''}
+
+  <div class="card" style="margin-top:14px">
+    <h4 style="margin:0 0 10px">Switch account</h4>
+    ${others.length?others.map(a=>`<div class="srrow"><span class="acctav">${esc(a.name.slice(0,1).toUpperCase())}</span>
+      <div style="flex:1"><div class="cn">${esc(a.name)}</div><div class="muted" style="font-size:.82rem">${a.role==='teacher'?'Teacher':esc(a.board||'Student')}</div></div>
+      <button class="btn sm" onclick="switchAccount('${a.id}')">Switch</button></div>`).join(''):'<p class="muted" style="margin:0">No other accounts on this device yet.</p>'}
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn amber sm" onclick="showWizard(true)">+ Add an account</button></div>
+  </div>
+
+  <div class="card" style="margin-top:14px;border-color:var(--line-soft)">
+    <details><summary style="cursor:pointer;color:var(--ink-soft);font-size:.9rem">Remove this account from the device</summary>
+    <p class="muted" style="font-size:.86rem;margin:10px 0">This permanently deletes <strong>${esc(acc.name)}</strong> and all its data on this browser. This cannot be undone.</p>
+    ${others.length?`<button class="btn sm" style="color:var(--t-concept);border-color:var(--t-concept)" onclick="if(confirm('Delete ${esc(acc.name)} and all their data on this device?')){const o=getAccounts().find(a=>a.id!=='${acc.id}');deleteAccount('${acc.id}');switchAccount(o.id)}">Delete account</button>`:'<p class="muted" style="font-size:.82rem">You can\'t delete the only account. Add another first.</p>'}</details>
+  </div>`;
+};
+
+/* ---------- Teacher dashboard ---------- */
+let stuView=null;
+function openStudent(id,source){stuView={id,source};go('students',true)}
+function closeStudent(){stuView=null;go('students',true)}
+function rosterCard(name,sub,g,onclick,extra){const st=statsFor(g);const dm=st.dom?TYPE_META[st.dom]:null;
+  return `<div class="stucard" onclick="${onclick}">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+      <span class="acctav">${esc(name.slice(0,1).toUpperCase())}</span>
+      <div style="flex:1"><div style="font-weight:700">${esc(name)}</div><div class="muted" style="font-size:.8rem">${esc(sub)}</div></div>
+      ${extra||''}
+    </div>
+    <div class="stustats">
+      <div><span class="ssbig">${st.streak}</span><span class="sslbl">streak</span></div>
+      <div><span class="ssbig">${st.gaps}</span><span class="sslbl">gaps</span></div>
+      <div><span class="ssbig" style="color:var(--due)">${st.due}</span><span class="sslbl">due</span></div>
+      <div><span class="ssbig" style="color:var(--t-slip)">${st.rags.g}</span><span class="sslbl">green</span></div>
+    </div>
+    ${dm?`<div class="mono" style="font-size:.72rem;color:var(--ink-faint);margin-top:8px">Main gap: <span style="color:${dm.c}">${dm.label}</span>${st.last?' · last active '+fmtDate(st.last):''}</div>`:`<div class="mono" style="font-size:.72rem;color:var(--ink-faint);margin-top:8px">No activity logged yet</div>`}
+  </div>`;
+}
+function studentDetail(){const {id,source}=stuView;const g=statGetter(id,source);const st=statsFor(g);
+  let name,sub;
+  if(source==='snap'){const s=getSnaps().find(x=>x.id===id);name=s?s.name:'Student';sub=(s&&s.board||'')+(s&&s.exported?' · snapshot from '+fmtDate(s.exported.slice(0,10)):'');}
+  else{const a=getAccounts().find(x=>x.id===id);name=a?a.name:'Student';sub=(a&&a.board||'')+(a&&a.year?' · '+a.year:'');}
+  const dm=st.dom?TYPE_META[st.dom]:null;
+  return `<button class="btn ghost sm" onclick="closeStudent()">‹ All students</button>
+    <h2 class="h-sec" style="margin-top:12px">${esc(name)}</h2>
+    <p class="lead">${esc(sub)}${source==='local'?` · <a onclick="switchAccount('${id}')">open this account</a>`:''}</p>
+    <div class="t4">
+      <div class="stat"><div class="big">${st.streak}</div><div class="lbl">day streak</div></div>
+      <div class="stat"><div class="big">${st.gaps}</div><div class="lbl">gaps logged</div></div>
+      <div class="stat"><div class="big" style="color:var(--due)">${st.due}</div><div class="lbl">reviews due</div></div>
+      <div class="stat"><div class="big" style="color:var(--t-slip)">${st.rags.g}</div><div class="lbl">topics green</div></div>
+    </div>
+    <h3 class="blk">Failure-type breakdown</h3>
+    <div class="t4">${Object.entries(TYPE_META).map(([k,v])=>`<div class="stat"><div class="big" style="color:${v.c}">${st.counts[k]||0}</div><div class="lbl">${v.label}</div></div>`).join('')}</div>
+    ${dm?`<div class="note"><span class="eyebrow">Dominant pattern</span>Most-logged failure: <strong style="color:${dm.c}">${dm.label}</strong>. ${clusterAdvice(st.dom)}</div>`:''}
+    <h3 class="blk">Spec confidence</h3>
+    <div class="card" style="display:flex;gap:18px"><div><span class="ssbig" style="color:var(--t-slip)">${st.rags.g}</span> <span class="muted">green</span></div><div><span class="ssbig" style="color:var(--t-trigger)">${st.rags.a}</span> <span class="muted">amber</span></div><div><span class="ssbig" style="color:var(--t-concept)">${st.rags.r}</span> <span class="muted">red</span></div></div>
+    <h3 class="blk">Weakest topics</h3>
+    ${st.weak.length?`<div class="card">${st.weak.map(w=>`<div class="srrow"><div style="flex:1" class="cn">${esc(w.topic)}</div><span class="meta">${w.n} gap${w.n>1?'s':''}${w.concept?' · '+w.concept+' conceptual':''}</span></div>`).join('')}</div>`:'<p class="muted">No topic gaps logged yet.</p>'}
+    <h3 class="blk">Recent gaps</h3>
+    ${st.log.length?`<div class="card">${st.log.slice(0,8).map(e=>{const m=TYPE_META[e.type]||{c:'#888',label:e.type};return `<div class="srrow"><span class="tg" style="background:${m.c}">${m.label}</span><div style="flex:1"><div class="cn">${esc(e.question||e.topic||'(untitled)')}</div>${e.note?`<div class="meta" style="white-space:normal;font-family:Inter;font-size:.84rem;color:var(--ink-soft)">${esc(e.note)}</div>`:''}</div><span class="meta">${fmtDate(e.date)}</span></div>`}).join('')}</div>`:'<p class="muted">Nothing logged yet.</p>'}`;
+}
+SEC.students=()=>{const acc=currentAccount();
+  if(!acc||acc.role!=='teacher')return `<h2 class="h-sec">My students</h2><p class="lead">This area is for teacher accounts. <a onclick="go('account')">Switch to a teacher account</a> to use it.</p>`;
+  if(stuView)return studentDetail();
+  const locals=getAccounts().filter(a=>a.role!=='teacher');
+  const snaps=getSnaps();
+  return `
+  <div class="eyebrow">Teacher</div>
+  <h2 class="h-sec">My students</h2>
+  <p class="lead">Everyone you're tracking. <strong>Local accounts</strong> live in this browser (good for a shared classroom device). <strong>Imported snapshots</strong> come from a student's share code — that's how you see students working on their own devices.</p>
+
+  <div class="grid two" style="margin-bottom:8px">
+    <div class="card"><h4 style="margin:0 0 6px">Add a student on this device</h4><p class="muted" style="font-size:.88rem;margin:0 0 10px">Creates a local account you can hand to a student or use to demo.</p><button class="btn amber sm" onclick="showWizard(true)">+ New student account</button></div>
+    <div class="card"><h4 style="margin:0 0 6px">Import a student's progress</h4><p class="muted" style="font-size:.88rem;margin:0 0 8px">Paste the share code a student sent you.</p>
+      <textarea id="importBox" class="winput" style="height:60px;font-family:'IBM Plex Mono';font-size:.7rem" placeholder="Paste share code here…"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px"><button class="btn amber sm" onclick="importSnapshot()">Import</button></div>
+      <div id="importMsg" class="mono" style="font-size:.78rem;color:var(--rest);margin-top:8px"></div></div>
+  </div>
+
+  ${locals.length?`<h3 class="blk">Local accounts (${locals.length})</h3><div class="stugrid">${locals.map(a=>rosterCard(a.name,(a.year?a.year+' · ':'')+a.board,statGetter(a.id,'local'),`openStudent('${a.id}','local')`)).join('')}</div>`:''}
+  ${snaps.length?`<h3 class="blk">Imported snapshots (${snaps.length})</h3><div class="stugrid">${snaps.map(s=>rosterCard(s.name,(s.board||'')+' · imported '+fmtDate(s.importedAt),statGetter(s.id,'snap'),`openStudent('${s.id}','snap')`,`<button class="btn ghost sm" onclick="event.stopPropagation();deleteSnap('${s.id}')" aria-label="remove">✕</button>`)).join('')}</div>`:''}
+  ${!locals.length&&!snaps.length?'<div class="note"><span class="eyebrow">No students yet</span>Add a local account above, or ask a student to open <strong>Account → Share my progress</strong> and send you the code.</p>':''}
+  <div class="note" style="margin-top:18px"><span class="eyebrow">How syncing works</span>This app has no server, so a teacher and a student on <em>different devices</em> aren't connected live. Snapshots are the bridge: the student sends a code whenever they want you to see their latest progress. For automatic, live class tracking you'd host a backend — ask and I'll explain that path.</p>`;
+};
+
+/* ---------- nav: account switcher + teacher-only items ---------- */
+function buildNav(){const acc=currentAccount();
+  const bar=acc?`<button class="acctbar" onclick="go('account')">
+    <span class="acctav">${esc((acc.name||'?').slice(0,1).toUpperCase())}</span>
+    <span class="acctmeta"><span class="acctname">${esc(acc.name)}</span><span class="acctrole">${acc.role==='teacher'?'Teacher':esc(acc.board||'Student')}</span></span>
+    <span class="acctcaret">⌄</span></button>`:'';
+  const items=NAV.filter(x=>!(x.teacherOnly&&(!acc||acc.role!=='teacher'))&&!(x.grp==='Teacher'&&(!acc||acc.role!=='teacher')));
+  document.getElementById('nav').innerHTML=bar+items.map(x=>x.grp
+    ?`<div class="grp">${x.grp}</div>`
+    :`<a data-id="${x.id}" onclick="go('${x.id}')"><span class="n">${x.n}</span>${x.t}</a>`).join('');
+  document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.id===current));
+}
+
+/* ====================================================================
+   VERSION 8 — SUPABASE: login, cloud-synced store, teacher provisioning
+   Replaces the local-account model with real auth. Each signed-in user's
+   data lives in the `progress` table; a cache keeps the app instant/offline.
+   ==================================================================== */
+
+/* ========== CONFIG — your two values (already filled in) ========== */
+/* If the publishable key below is ever truncated/wrong, replace this one line
+   with the full value from Supabase → Settings → API Keys → Publishable key. */
+const SB_URL = 'https://gofxdyxmbyrtmvvmjzfd.supabase.co';
+const SB_KEY = 'sb_publishable_UtlY7EQXHRuFyweHzfs7hw_VzeI25Rc';
+const SB_DOMAIN = '@revision.local';   // usernames map to username@revision.local
+/* ================================================================== */
+
+const sb = (window.supabase && window.supabase.createClient)
+  ? window.supabase.createClient(SB_URL, SB_KEY, { auth:{ persistSession:true, autoRefreshToken:true } })
+  : null;
+
+let SBUSER=null, SBPROFILE=null, CACHE={}, _dirty={}, _flushT=null;
+
+/* ---------- cloud-synced store (overrides the local one) ---------- */
+store.get = (k,d)=> (k in CACHE) ? CACHE[k] : d;
+store.set = (k,v)=>{ CACHE[k]=v; _dirty[k]=true; backupLocal(); scheduleFlush(); };
+store.del = (k)=>{ delete CACHE[k]; backupLocal(); if(sb&&SBUSER) sb.from('progress').delete().eq('user_id',SBUSER.id).eq('key',k); };
+function backupLocal(){ try{ if(SBUSER) localStorage.setItem('cache:'+SBUSER.id, JSON.stringify(CACHE)); }catch(e){} }
+function scheduleFlush(){ clearTimeout(_flushT); _flushT=setTimeout(flushWrites,700); }
+async function flushWrites(){
+  if(!sb||!SBUSER) return;
+  const keys=Object.keys(_dirty); if(!keys.length) return;
+  const rows=keys.map(k=>({ user_id:SBUSER.id, key:k, value:CACHE[k], updated_at:new Date().toISOString() }));
+  _dirty={};
+  try{ const {error}=await sb.from('progress').upsert(rows,{onConflict:'user_id,key'}); if(error) keys.forEach(k=>_dirty[k]=true); }
+  catch(e){ keys.forEach(k=>_dirty[k]=true); }
+}
+window.addEventListener('beforeunload', ()=>{ try{ flushWrites(); }catch(e){} });
+setInterval(()=>{ if(Object.keys(_dirty).length) flushWrites(); }, 5000); // safety flush
+
+async function hydrateStore(){
+  CACHE={};
+  try{
+    const {data,error}=await sb.from('progress').select('key,value').eq('user_id',SBUSER.id);
+    if(!error&&data) data.forEach(r=>{ CACHE[r.key]=r.value; });
+  }catch(e){}
+  // merge any offline backup that hasn't synced
+  try{ const off=JSON.parse(localStorage.getItem('cache:'+SBUSER.id)||'{}'); for(const k in off){ if(!(k in CACHE)) CACHE[k]=off[k]; } }catch(e){}
+  // reflect the profile's board into the app's profile blob
+  const prof=store.get('profile',{level:null,goal:null});
+  if(SBPROFILE&&SBPROFILE.board&&!prof.board){ prof.board=SBPROFILE.board; CACHE.profile=prof; }
+}
+
+/* ---------- identity (overrides local currentAccount) ---------- */
+function currentAccount(){ return SBPROFILE ? {id:SBPROFILE.id,name:SBPROFILE.name||'You',role:SBPROFILE.role,board:SBPROFILE.board||''} : null; }
+async function sbLoadProfile(){
+  try{ const {data}=await sb.from('profiles').select('*').eq('id',SBUSER.id).single(); SBPROFILE=data; }catch(e){}
+  if(!SBPROFILE) SBPROFILE={ id:SBUSER.id, name:(SBUSER.email||'You').split('@')[0], role:'student', board:null, class_id:null };
+}
+
+/* ---------- auth boot ---------- */
+async function initApp(){
+  if(!sb){ document.getElementById('content').innerHTML='<div class="wrap" style="padding:40px"><h2>Connection not configured</h2><p class="lead">The Supabase client did not load. Check that the supabase-js script tag is present in index.html and that SB_URL / SB_KEY are set.</p></div>'; return; }
+  try{
+    const {data:{session}}=await sb.auth.getSession();
+    if(session&&session.user){ await onLogin(session.user); } else { showLogin(); }
+  }catch(e){ showLogin(); }
+  sb.auth.onAuthStateChange((event)=>{ if(event==='SIGNED_OUT'){ location.reload(); } });
+}
+async function onLogin(user){
+  SBUSER=user;
+  await sbLoadProfile();
+  await hydrateStore();
+  try{ syncBoardFromAccount(); }catch(e){}
+  recordActivity();            // mark today active (syncs)
+  hideLogin();
+  buildNav();
+  const start=(location.hash||'').replace('#','');
+  go(SEC[start]?start:'dashboard');
+}
+async function doLogout(){ try{ await flushWrites(); }catch(e){} try{ await sb.auth.signOut(); }catch(e){} location.reload(); }
+
+/* ---------- login screen ---------- */
+function showLogin(){
+  let o=document.getElementById('login'); if(!o){ o=document.createElement('div'); o.id='login'; document.body.appendChild(o); }
+  o.style.display='flex';
+  o.innerHTML=`<div class="onb-card wizcard" style="max-width:420px">
+    <div class="wbrand"><img src="logo.svg" width="38" height="38" style="border-radius:9px"> Relearning <b>Physics</b></div>
+    <p class="wsub">Sign in to continue. Students: use the username and password your teacher gave you.</p>
+    <label class="weyebrow">Username</label>
+    <input id="liUser" class="winput" autocomplete="username" placeholder="username" onkeydown="if(event.key==='Enter')document.getElementById('liPass').focus()">
+    <label class="weyebrow" style="margin-top:12px;display:block">Password</label>
+    <input id="liPass" class="winput" type="password" autocomplete="current-password" placeholder="password" onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="liErr" style="color:var(--t-concept);font-size:.85rem;min-height:18px;margin:10px 0 0"></div>
+    <button class="btn amber" style="width:100%;margin-top:6px;justify-content:center" id="liBtn" onclick="doLogin()">Sign in</button>
+  </div>`;
+  setTimeout(()=>{ const u=document.getElementById('liUser'); if(u) u.focus(); },50);
+}
+function hideLogin(){ const o=document.getElementById('login'); if(o) o.style.display='none'; }
+async function doLogin(){
+  const u=(document.getElementById('liUser').value||'').toLowerCase().trim();
+  const p=document.getElementById('liPass').value||'';
+  const err=document.getElementById('liErr'), btn=document.getElementById('liBtn');
+  if(!u||!p){ err.textContent='Enter your username and password.'; return; }
+  btn.textContent='Signing in…'; btn.disabled=true; err.textContent='';
+  try{
+    const {data,error}=await sb.auth.signInWithPassword({ email:u+SB_DOMAIN, password:p });
+    if(error){ err.textContent='Wrong username or password.'; btn.textContent='Sign in'; btn.disabled=false; return; }
+    await onLogin(data.user);
+  }catch(e){ err.textContent='Could not sign in. Check your connection.'; btn.textContent='Sign in'; btn.disabled=false; }
+}
+/* ---------- Account page ---------- */
+async function updateMyBoard(b){ setProfile('board',b); try{ await sb.from('profiles').update({board:b}).eq('id',SBUSER.id); }catch(e){} try{syncBoardFromAccount();}catch(e){} go('account',true); }
+SEC.account=()=>{ const a=currentAccount(); if(!a) return '<p class="lead">Not signed in.</p>';
+  return `
+  <div class="eyebrow">You</div>
+  <h2 class="h-sec">Account</h2>
+  <p class="lead">Signed in as <strong>${esc(a.name)}</strong>${a.role==='teacher'?' · teacher':''}. Your progress saves to the cloud automatically, so it follows you to any device you sign in on.</p>
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:14px">
+      <span class="acctav big">${esc((a.name||'?').slice(0,1).toUpperCase())}</span>
+      <div><div style="font-weight:700;font-size:1.1rem">${esc(a.name)}</div>
+        <div class="muted" style="font-size:.9rem">${a.role==='teacher'?'Teacher account':esc(a.board||'Student')}</div></div>
+    </div>
+    ${a.role!=='teacher'?`<div class="eyebrow" style="margin:16px 0 6px">Exam board</div>
+      <div class="opts" style="flex-direction:row;flex-wrap:wrap">${BOARDS.map(b=>`<button class="opt ${a.board===b?'sel':''}" style="flex:1;justify-content:center;min-width:130px" onclick="updateMyBoard('${b}')">${b}</button>`).join('')}</div>
+      <div class="eyebrow" style="margin:16px 0 6px">Goal</div>
+      <div class="opts" style="flex-direction:row;flex-wrap:wrap">${GOALS.map(g=>`<button class="opt ${(getProfile().goal)===g?'sel':''}" style="flex:1;justify-content:center;min-width:110px" onclick="setProfile('goal','${g}');go('account',true)">${g}</button>`).join('')}</div>`:`<p class="muted" style="margin-top:14px">Manage your class from <a onclick="go('students')">My students</a>.</p>`}
+  </div>
+  <div class="card" style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+    <div><strong>Sign out</strong><div class="muted" style="font-size:.88rem">Your work is saved to the cloud.</div></div>
+    <button class="btn" onclick="doLogout()">Sign out</button>
+  </div>`;
+};
+
+/* ---------- teacher: create a student via the Edge Function ---------- */
+async function createStudent(){
+  const u=(document.getElementById('csUser').value||'').toLowerCase().trim();
+  const p=document.getElementById('csPass').value||'';
+  const b=document.getElementById('csBoard').value||'';
+  const msg=document.getElementById('csMsg');
+  if(!u||!p){ msg.style.color='var(--t-concept)'; msg.textContent='Enter a username and password.'; return; }
+  if(p.length<6){ msg.style.color='var(--t-concept)'; msg.textContent='Password must be at least 6 characters.'; return; }
+  msg.style.color='var(--ink-soft)'; msg.textContent='Creating…';
+  try{
+    const {data:{session}}=await sb.auth.getSession();
+    const res=await fetch(SB_URL+'/functions/v1/create-student',{
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+session.access_token, 'apikey':SB_KEY },
+      body:JSON.stringify({ username:u, password:p, board:b })
+    });
+    const out=await res.json();
+    if(!res.ok){ msg.style.color='var(--t-concept)'; msg.textContent=out.error||('Failed ('+res.status+')'); return; }
+    msg.style.color='var(--t-slip)'; msg.textContent='Created ✓  '+u+' can now sign in.';
+    document.getElementById('csUser').value=''; document.getElementById('csPass').value='';
+    loadRoster();
+  }catch(e){ msg.style.color='var(--t-concept)'; msg.textContent='Network error contacting the function.'; }
+}
+
+/* ---------- teacher dashboard (data from Supabase) ---------- */
+let ROSTER=null, stuView2=null;
+async function loadRoster(){
+  const host=document.getElementById('rosterBox'); if(!host) return;
+  host.innerHTML='<p class="muted">Loading your students…</p>';
+  try{
+    const {data:profs,error}=await sb.from('profiles').select('*').eq('class_id',SBPROFILE.class_id||'__none__');
+    if(error) throw error;
+    const students=(profs||[]).filter(p=>p.role==='student');
+    const ids=students.map(s=>s.id);
+    let prog=[];
+    if(ids.length){ const {data}=await sb.from('progress').select('user_id,key,value').in('user_id',ids); prog=data||[]; }
+    const byUser={}; prog.forEach(r=>{ (byUser[r.user_id]=byUser[r.user_id]||{})[r.key]=r.value; });
+    ROSTER=students.map(s=>({ profile:s, data:byUser[s.id]||{} }));
+    renderRoster();
+  }catch(e){ host.innerHTML='<div class="note"><span class="eyebrow">Could not load students</span>'+esc(String(e.message||e))+'</p>'; }
+}
+function getterFor(rec){ return (k,d)=> (k in rec.data) ? rec.data[k] : d; }
+function renderRoster(){
+  const host=document.getElementById('rosterBox'); if(!host) return;
+  if(stuView2){ host.innerHTML=studentDetail2(stuView2); return; }
+  if(!ROSTER||!ROSTER.length){ host.innerHTML='<div class="note"><span class="eyebrow">No students yet</span>Create one above — they sign in with the username and password you set, on any device.</p>'; return; }
+  host.innerHTML=`<div class="stugrid">${ROSTER.map((rec,i)=>{ const st=statsFor(getterFor(rec)); const dm=st.dom?TYPE_META[st.dom]:null; const name=rec.profile.name||'Student';
+    return `<div class="stucard" onclick="openStu2(${i})">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <span class="acctav">${esc(name.slice(0,1).toUpperCase())}</span>
+        <div style="flex:1"><div style="font-weight:700">${esc(name)}</div><div class="muted" style="font-size:.8rem">${esc(rec.profile.board||'—')}</div></div>
+      </div>
+      <div class="stustats">
+        <div><span class="ssbig">${st.streak}</span><span class="sslbl">streak</span></div>
+        <div><span class="ssbig">${st.gaps}</span><span class="sslbl">gaps</span></div>
+        <div><span class="ssbig" style="color:var(--due)">${st.due}</span><span class="sslbl">due</span></div>
+        <div><span class="ssbig" style="color:var(--t-slip)">${st.rags.g}</span><span class="sslbl">green</span></div>
+      </div>
+      ${dm?`<div class="mono" style="font-size:.72rem;color:var(--ink-faint);margin-top:8px">Main gap: <span style="color:${dm.c}">${dm.label}</span>${st.last?' · '+fmtDate(st.last):''}</div>`:'<div class="mono" style="font-size:.72rem;color:var(--ink-faint);margin-top:8px">No activity yet</div>'}
+    </div>`; }).join('')}</div>`;
+}
+function openStu2(i){ stuView2=ROSTER[i]; renderRoster(); }
+function closeStu2(){ stuView2=null; renderRoster(); }
+function studentDetail2(rec){ const g=getterFor(rec); const st=statsFor(g); const name=rec.profile.name||'Student'; const dm=st.dom?TYPE_META[st.dom]:null;
+  return `<button class="btn ghost sm" onclick="closeStu2()">‹ All students</button>
+    <h2 class="h-sec" style="margin-top:12px">${esc(name)}</h2>
+    <p class="lead">${esc(rec.profile.board||'')}</p>
+    <div class="t4">
+      <div class="stat"><div class="big">${st.streak}</div><div class="lbl">day streak</div></div>
+      <div class="stat"><div class="big">${st.gaps}</div><div class="lbl">gaps logged</div></div>
+      <div class="stat"><div class="big" style="color:var(--due)">${st.due}</div><div class="lbl">reviews due</div></div>
+      <div class="stat"><div class="big" style="color:var(--t-slip)">${st.rags.g}</div><div class="lbl">topics green</div></div>
+    </div>
+    <h3 class="blk">Failure-type breakdown</h3>
+    <div class="t4">${Object.entries(TYPE_META).map(([k,v])=>`<div class="stat"><div class="big" style="color:${v.c}">${st.counts[k]||0}</div><div class="lbl">${v.label}</div></div>`).join('')}</div>
+    ${dm?`<div class="note"><span class="eyebrow">Dominant pattern</span>Most-logged: <strong style="color:${dm.c}">${dm.label}</strong>. ${clusterAdvice(st.dom)}</div>`:''}
+    <h3 class="blk">Spec confidence</h3>
+    <div class="card" style="display:flex;gap:18px"><div><span class="ssbig" style="color:var(--t-slip)">${st.rags.g}</span> <span class="muted">green</span></div><div><span class="ssbig" style="color:var(--t-trigger)">${st.rags.a}</span> <span class="muted">amber</span></div><div><span class="ssbig" style="color:var(--t-concept)">${st.rags.r}</span> <span class="muted">red</span></div></div>
+    <h3 class="blk">Weakest topics</h3>
+    ${st.weak.length?`<div class="card">${st.weak.map(w=>`<div class="srrow"><div style="flex:1" class="cn">${esc(w.topic)}</div><span class="meta">${w.n} gap${w.n>1?'s':''}${w.concept?' · '+w.concept+' conceptual':''}</span></div>`).join('')}</div>`:'<p class="muted">No topic gaps logged yet.</p>'}
+    <h3 class="blk">Recent gaps</h3>
+    ${st.log.length?`<div class="card">${st.log.slice(0,8).map(e=>{const m=TYPE_META[e.type]||{c:'#888',label:e.type};return `<div class="srrow"><span class="tg" style="background:${m.c}">${m.label}</span><div style="flex:1"><div class="cn">${esc(e.question||e.topic||'(untitled)')}</div>${e.note?`<div class="meta" style="white-space:normal;font-family:Inter;font-size:.84rem;color:var(--ink-soft)">${esc(e.note)}</div>`:''}</div><span class="meta">${fmtDate(e.date)}</span></div>`}).join('')}</div>`:'<p class="muted">Nothing logged yet.</p>'}`;
+}
+SEC.students=()=>{ const a=currentAccount();
+  if(!a||a.role!=='teacher') return `<h2 class="h-sec">My students</h2><p class="lead">This area is for the teacher account.</p>`;
+  stuView2=null;
+  return `
+  <div class="eyebrow">Teacher</div>
+  <h2 class="h-sec">My students</h2>
+  <p class="lead">Everyone in your class, syncing live. Create a login for each student below — they sign in on their own device and their progress appears here automatically.</p>
+  <div class="card">
+    <h4 style="margin:0 0 8px">Create a student login</h4>
+    <div class="row">
+      <div><label class="fld">Username</label><input id="csUser" placeholder="e.g. alex"></div>
+      <div><label class="fld">Password</label><input id="csPass" placeholder="at least 6 characters"></div>
+    </div>
+    <label class="fld">Exam board</label>
+    <select id="csBoard">${BOARDS.map(b=>`<option value="${b}">${b}</option>`).join('')}</select>
+    <div style="margin-top:10px"><button class="btn amber sm" onclick="createStudent()">Create login</button></div>
+    <div id="csMsg" class="mono" style="font-size:.8rem;margin-top:10px;min-height:18px"></div>
+  </div>
+  <h3 class="blk">Class roster</h3>
+  <div id="rosterBox"></div>`;
+};
+
 /* ============ render engine ============ */
 let current='overview';
 function fillHosts(){
@@ -3086,13 +3620,20 @@ function rerenderTools(){
   if(document.getElementById('mSrList'))renderSRList(document.getElementById('mSrList'),true);
   if(document.getElementById('tfList'))renderTransferList();
 }
-function buildNav(){
-  document.getElementById('nav').innerHTML=NAV.map(x=>x.grp
+function buildNav(){const acc=currentAccount();
+  const bar=acc?`<button class="acctbar" onclick="go('account')">
+    <span class="acctav">${esc((acc.name||'?').slice(0,1).toUpperCase())}</span>
+    <span class="acctmeta"><span class="acctname">${esc(acc.name)}</span><span class="acctrole">${acc.role==='teacher'?'Teacher':esc(acc.board||'Student')}</span></span>
+    <span class="acctcaret">⌄</span></button>`:'';
+  const items=NAV.filter(x=>!(x.teacherOnly&&(!acc||acc.role!=='teacher'))&&!(x.grp==='Teacher'&&(!acc||acc.role!=='teacher')));
+  document.getElementById('nav').innerHTML=bar+items.map(x=>x.grp
     ?`<div class="grp">${x.grp}</div>`
     :`<a data-id="${x.id}" onclick="go('${x.id}')"><span class="n">${x.n}</span>${x.t}</a>`).join('');
+  document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.id===current));
 }
 function go(id,noscroll){
   if(!SEC[id])return;current=id;
+  if(id!=='students'){stuView=null}
   stopSandbox();
   if(id==='lens')lensPick=null;
   document.getElementById('content').innerHTML=`<section class="on">${helpBanner(id)}${SEC[id]()}</section>`;
@@ -3107,6 +3648,7 @@ function go(id,noscroll){
   if(id==='contrast'){contIdx=0;renderContrast()}
   if(id==='models'){renderModels()}
   if(id==='spec'){renderSpec()}
+  if(id==='students'){loadRoster()}
   if(window.innerWidth<=860){document.getElementById('side').classList.remove('show');document.getElementById('scrim').classList.remove('show')}
   if(!noscroll)window.scrollTo({top:0,behavior:'instant'in window?'instant':'auto'});
   try{history.replaceState(null,'','#'+id)}catch(e){}
@@ -3114,7 +3656,5 @@ function go(id,noscroll){
 function toggleNav(){document.getElementById('side').classList.toggle('show');document.getElementById('scrim').classList.toggle('show')}
 
 /* ============ init ============ */
-buildNav();
-const start=(location.hash||'').replace('#','');
-go(SEC[start]?start:'dashboard');
-if(!store.get('onboarded',false)){showOnboard()}
+/* boot via Supabase auth */
+initApp();
