@@ -3469,7 +3469,7 @@ async function doLogin(){
   btn.textContent='Signing in…'; btn.disabled=true; err.textContent='';
   try{
     const {data,error}=await sb.auth.signInWithPassword({ email:u+SB_DOMAIN, password:p });
-    if(error){ err.textContent='Wrong username or password.'; btn.textContent='Sign in'; btn.disabled=false; return; }
+    if(error){ err.textContent=error.message; btn.textContent='Sign in'; btn.disabled=false; return; }
     await onLogin(data.user);
   }catch(e){ err.textContent='Could not sign in. Check your connection.'; btn.textContent='Sign in'; btn.disabled=false; }
 }
