@@ -623,7 +623,7 @@ function addSR(mini){
   const list=getSR();
   const due=new Date();due.setDate(due.getDate()+SR_INT[0]);
   list.push({id:uid(),concept:c,added:todayISO(),idx:0,due:due.toISOString().slice(0,10)});
-  store.set('srItems',list);document.getElementById(p+'srInput').value='';recordActivity();rerenderTools();
+  store.set('srItems',list);document.getElementById(p+'srInput').value='';logAction('practice');rerenderTools();
 }
 function reviewSR(id,solid){
   const list=getSR();const it=list.find(x=>x.id===id);if(!it)return;
@@ -680,7 +680,7 @@ function saveTransfer(mini){
   const expl=document.getElementById(p+'tExpl').value.trim();if(!expl)return;
   const list=getTransfer();
   list.unshift({id:uid(),topic:curPrompt.topic,scenario:curPrompt.text,explanation:expl,date:todayISO()});
-  store.set('transferNotes',list);recordActivity();document.getElementById(p+'tExpl').value='';rerenderTools();
+  store.set('transferNotes',list);logAction('apply');document.getElementById(p+'tExpl').value='';rerenderTools();
 }
 function delTransfer(id){store.set('transferNotes',getTransfer().filter(x=>x.id!==id));rerenderTools()}
 function transferForm(mini){const p=mini?'m':'';
@@ -739,11 +739,25 @@ function workedLoop(){
    Spliced in before the render engine. All client-side, all persistent-safe.
    ==================================================================== */
 
-/* ---- activity tracking (powers streaks + dashboard) ---- */
-function recordActivity(){
+/* ---- activity tracking (powers streaks + dashboard) ----
+   A day only counts toward the streak once EVERY item on today's plan is
+   genuinely done. Plan items tick from real actions (logged below), never
+   from merely opening a page. */
+function todayActions(){const m=store.get('actionLog',{});return m[todayISO()]||[]}
+function logAction(key){
+  const m=store.get('actionLog',{});const t=todayISO();const a=m[t]||[];
+  if(!a.includes(key)){a.push(key);m[t]=a;store.set('actionLog',m)}
+  tryCompleteDay();
+}
+function planComplete(){const b=todayPlan();return b.length>0&&b.every(x=>x.done)}
+function tryCompleteDay(){
+  if(!planComplete())return;
   const days=store.get('activityDays',[]);const t=todayISO();
   if(!days.includes(t)){days.push(t);store.set('activityDays',days)}
 }
+/* recordActivity now just re-checks whether today's plan is fully complete;
+   it no longer marks the day active on its own. */
+function recordActivity(){tryCompleteDay()}
 function currentStreak(){
   const days=store.get('activityDays',[]).slice().sort();
   if(!days.length)return 0;
@@ -966,7 +980,7 @@ function pickTrig(i){if(trigDone)return;const it=TRIG[trigIdx];
   const b=document.getElementById('trigCheck');renderTrig();}
 function checkTrig(){if(!trigPicked.size)return;const it=TRIG[trigIdx];
   const correct=it.opts.every((o,i)=>(!!o.c)===trigPicked.has(i));
-  trigDone=true;trigScore.t++;if(correct)trigScore.r++;recordActivity();renderTrig();}
+  trigDone=true;trigScore.t++;if(correct)trigScore.r++;logAction('practice');renderTrig();}
 function nextTrig(){trigIdx=(trigIdx+1)%TRIG.length;if(trigIdx===0){trigScore={r:0,t:0}}trigPicked=new Set();trigDone=false;renderTrig();}
 function logTrigMiss(){const it=TRIG[trigIdx];const list=getLog();
   list.unshift({id:uid(),date:todayISO(),type:'trigger',topic:it.s.slice(0,48),note:'Missed in trigger trainer. '+it.why,paper:'Trigger trainer'});
@@ -1069,7 +1083,7 @@ function renderSoc(){const box=document.getElementById('socBox');if(!box)return;
   else html+=`<p class="mono" style="font-size:.78rem;color:var(--rest);margin:4px 0 0">✓ You\'ve walked the full chain. Say the answer aloud.</p>`;
   box.innerHTML=html;}
 function pickQuiz(i){if(qDone)return;qPicked=i;qDone=true;qScore.t++;qSocStep=0;
-  if(QUIZ[qIdx].opts[i].c)qScore.r++;recordActivity();renderQuiz();}
+  if(QUIZ[qIdx].opts[i].c)qScore.r++;logAction('practice');renderQuiz();}
 function nextQuiz(){qIdx=(qIdx+1)%QUIZ.length;if(qIdx===0)qScore={r:0,t:0};qDone=false;qPicked=-1;qSocStep=0;renderQuiz();}
 SEC.miscquiz=()=>`
   <div class="eyebrow">Practice · active</div>
@@ -1140,7 +1154,7 @@ function renderEx(){
     <div class="eq" style="margin:8px 0 16px">${e.form}</div>${body}`;
 }
 function fmtNum(n){if(!isFinite(n))return'∞';if(Math.abs(n)>=1000)return Math.round(n).toLocaleString();return Math.round(n*100)/100}
-function exPredict(i){exPredPick=i;exPredicted=true;recordActivity();renderEx();}
+function exPredict(i){exPredPick=i;exPredicted=true;logAction('practice');renderEx();}
 function exSet(s,val){exVals[s]=parseFloat(val);renderEx();
   // keep focus feel: re-grab slider not needed since values shown in label
 }
@@ -1169,7 +1183,7 @@ function renderCF(){const host=document.getElementById('cfBox');if(!host)return;
     <p style="margin:12px 0 4px;color:var(--ink-soft);font-size:.92rem"><strong>Setup:</strong> ${esc(c.o)}</p>
     <div class="scenario" style="margin:8px 0">${esc(c.f)}</div>
     <p class="muted" style="font-size:.84rem;margin:0 0 12px">Say your prediction out loud — commit to a mechanism — before revealing.</p>
-    ${cfShown?`<div class="note"><span class="eyebrow">The physics</span>${c.r}</div>`:`<button class="btn amber" onclick="cfShown=true;renderCF();recordActivity()">Reveal the physics</button>`}
+    ${cfShown?`<div class="note"><span class="eyebrow">The physics</span>${c.r}</div>`:`<button class="btn amber" onclick="cfShown=true;renderCF();logAction('apply')">Reveal the physics</button>`}
     <div style="margin-top:14px"><button class="btn ghost sm" onclick="cfNext()">↻ Another scenario</button></div>`;
 }
 function cfNext(){cfIdx=(cfIdx+1)%CF.length;cfShown=false;renderCF();}
@@ -1344,7 +1358,7 @@ function reviewSR(id,grade){const list=getSR();const it=list.find(x=>x.id===id);
   else if(grade==='good')it.idx=Math.min(it.idx+1,max);
   else if(grade==='easy')it.idx=Math.min(it.idx+2,max);
   const d=new Date();d.setDate(d.getDate()+SR_INT[it.idx]);it.due=d.toISOString().slice(0,10);
-  store.set('srItems',list);recordActivity();rerenderTools();}
+  store.set('srItems',list);logAction('practice');rerenderTools();}
 function renderSRList(host,miniOnlyDue){
   if(!host)return;const list=getSR();const today=todayISO();
   const due=list.filter(x=>x.due<=today).sort((a,b)=>a.due.localeCompare(b.due));
@@ -1431,18 +1445,26 @@ function forgettingForecast(){const list=getSR();const today=new Date();const ho
   const h=horizon.toISOString().slice(0,10);const t=todayISO();
   return list.filter(x=>x.due>t&&x.due<=h).sort((a,b)=>a.due.localeCompare(b.due));}
 function todayPlan(){
-  const blocks=[];const due=dueCount();const dom=dominantType();const log=getLog();const res=resurrectable();
-  if(due>0)blocks.push({m:10,t:`Clear ${due} due review${due>1?'s':''}`,d:'Overdue retrieval decays fastest — always first.',to:'scheduler'});
-  if(res.length)blocks.push({m:5,t:'Revisit one 30-day-old mistake',d:'The real test of learning: can you still solve it cold?',to:'dashboard'});
-  if(!log.length){blocks.push({m:20,t:'Log a diagnostic paper section',d:'Sort every miss by failure type so the app can start coaching you.',to:'diagnose'});}
-  else if(dom==='concept')blocks.push({m:15,t:'Hunt a misconception',d:'Your dominant gap is a broken model. Rebuild it actively.',to:'miscquiz'});
-  else if(dom==='trigger')blocks.push({m:15,t:'Trigger recognition drills',d:'Train spotting which model a situation needs.',to:'trigger'});
-  else if(dom==='recall')blocks.push({m:10,t:'Schedule & recall weak facts',d:'Push the missing facts into spaced retrieval.',to:'scheduler'});
-  else if(dom==='slip')blocks.push({m:10,t:'Re-mark for slips, build a checklist',d:'Fix execution, not theory.',to:'diagnose'});
-  else if(dom==='comp')blocks.push({m:10,t:'Command-word & vocabulary drill',d:'Make the questions decode instantly.',to:'misconceptions'});
-  else blocks.push({m:15,t:'Pick any practice module',d:'No dominant weakness yet — generate some signal.',to:'trigger'});
-  blocks.push({m:10,t:'One application or counterfactual',d:'Use a concept outside an exam question — that\'s where understanding shows.',to:'counterfactual'});
-  blocks.push({m:5,t:'Daily lens — explain one real thing',d:'Keep the transfer habit and the streak alive.',to:'lens'});
+  const blocks=[];const due=dueCount();const dom=dominantType();const log=getLog();
+  const today=todayISO();const acts=todayActions();
+  const hasLens=(typeof CURTOOLS!=='undefined')&&CURTOOLS.indexOf('lens')>=0;
+  if(due>0)blocks.push({key:'reviews',m:10,t:`Clear ${due} due review${due>1?'s':''}`,d:'Overdue retrieval decays fastest — always first.',to:'scheduler'});
+  if(!log.length){blocks.push({key:'diagnose',m:20,t:'Log a diagnostic paper section',d:'Sort every miss by failure type so the app can start coaching you.',to:'diagnose'});}
+  else if(dom==='concept')blocks.push({key:'practice',m:15,t:'Hunt a misconception',d:'Your dominant gap is a broken model. Rebuild it actively.',to:'miscquiz'});
+  else if(dom==='trigger')blocks.push({key:'practice',m:15,t:'Trigger recognition drills',d:'Train spotting which model a situation needs.',to:'trigger'});
+  else if(dom==='recall')blocks.push({key:'practice',m:10,t:'Schedule & recall weak facts',d:'Push the missing facts into spaced retrieval.',to:'scheduler'});
+  else if(dom==='slip')blocks.push({key:'practice',m:10,t:'Re-mark for slips, build a checklist',d:'Fix execution, not theory.',to:'diagnose'});
+  else if(dom==='comp')blocks.push({key:'practice',m:10,t:'Command-word & vocabulary drill',d:'Make the questions decode instantly.',to:'misconceptions'});
+  else blocks.push({key:'practice',m:15,t:'Pick any practice module',d:'No dominant weakness yet — generate some signal.',to:'trigger'});
+  blocks.push({key:'apply',m:10,t:'One application or counterfactual',d:'Use a concept outside an exam question — that\'s where understanding shows.',to:'counterfactual'});
+  if(hasLens)blocks.push({key:'lens',m:5,t:'Daily lens — explain one real thing',d:'Keep the transfer habit and the streak alive.',to:'lens'});
+  /* done-state comes only from real, performed actions */
+  blocks.forEach(b=>{
+    if(b.key==='reviews')b.done=(dueCount()===0);
+    else if(b.key==='diagnose')b.done=log.some(e=>e.date===today);
+    else if(b.key==='lens')b.done=getLens().some(x=>x.date===today);
+    else b.done=acts.indexOf(b.key)>=0; // practice / apply
+  });
   return blocks;
 }
 function buildReport(){
@@ -1467,6 +1489,7 @@ function buildReport(){
 }
 SEC.plan=()=>{
   const blocks=todayPlan();const total=blocks.reduce((a,b)=>a+b.m,0);const dom=dominantType();
+  const doneN=blocks.filter(b=>b.done).length;const allDone=blocks.length>0&&doneN===blocks.length;
   const rx=dom?PRESCRIPTION[dom]:null;const report=buildReport();const f=forgettingForecast();const p=getProfile();
   return `
   <div class="eyebrow">Start here · your tutor</div>
@@ -1476,11 +1499,14 @@ SEC.plan=()=>{
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
       <div class="eyebrow">Today's session</div><span class="mono" style="font-size:.78rem;color:var(--ink-faint)">≈ ${total} min</span></div>
-    ${blocks.map((b,i)=>`<div class="planrow" onclick="go('${b.to}')">
-      <span class="plan-n">${i+1}</span>
+    ${blocks.map((b,i)=>`<div class="planrow${b.done?' done':''}" onclick="go('${b.to}')">
+      <span class="plan-chk${b.done?' on':''}" title="${b.done?'Done':'Do this to tick it off'}">${b.done?'✓':''}</span>
       <div style="flex:1"><div style="font-weight:600">${b.t} <span class="mono" style="font-size:.72rem;color:var(--ink-faint)">· ${b.m} min</span></div>
         <div class="muted" style="font-size:.85rem">${b.d}</div></div>
       <span class="arrow">›</span></div>`).join('')}
+    <div class="plan-status ${allDone?'done':''}">${allDone
+      ? `<strong>✓ Plan complete</strong> — today counts toward your streak. 🔥`
+      : `<strong>${doneN} / ${blocks.length} done.</strong> Items tick automatically once you actually do them — finish all of them to keep your streak.`}</div>
   </div>
 
   ${rx?`<h3 class="blk">Your learning prescription</h3>
@@ -3362,7 +3388,7 @@ function buildNav(){const acc=currentAccount();
   let subjBar='';
   try{ if(typeof SUBJECTS!=='undefined') subjBar='<div class="subjbar">'+Object.keys(SUBJECTS).map(id=>`<button class="subjbtn ${id===CURSUBJ?'on':''}" onclick="switchSubject('${id}')">${SUBJECTS[id].name}</button>`).join('')+'</div>'; }catch(e){}
   const tools=(typeof CURTOOLS!=='undefined')?CURTOOLS:null;
-  const TOGGLE=new Set(['trigger','miscquiz','explorer','counterfactual','sandbox','misconceptions','contrast','models','analogies','conceptmap','spec','alevel','resources']);
+  const TOGGLE=new Set(['trigger','miscquiz','explorer','counterfactual','sandbox','misconceptions','contrast','models','analogies','conceptmap','spec','alevel','resources','transfer','lens']);
   let items=NAV.filter(x=>!(x.teacherOnly&&(!acc||acc.role!=='teacher'))&&!(x.grp==='Teacher'&&(!acc||acc.role!=='teacher'))&&!(x.id&&tools&&TOGGLE.has(x.id)&&tools.indexOf(x.id)<0));
   items=items.filter((x,i)=>!(x.grp&&(i===items.length-1||items[i+1].grp)));
   document.getElementById('nav').innerHTML=subjBar+bar+items.map(x=>x.grp
@@ -3533,7 +3559,14 @@ async function loadRoster(){
   const host=document.getElementById('rosterBox'); if(!host) return;
   host.innerHTML='<p class="muted">Loading your students…</p>';
   try{
-    const {data:profs,error}=await sb.from('profiles').select('*').eq('class_id',SBPROFILE.class_id||'__none__');
+    /* A teacher owns their class via classes.teacher_id — their own
+       profile.class_id is usually null, so resolve the class id(s) from the
+       classes table rather than from the teacher's profile. */
+    let classIds=[];
+    try{ const {data:cls}=await sb.from('classes').select('id').eq('teacher_id',SBUSER.id); classIds=(cls||[]).map(c=>c.id); }catch(e){}
+    if(SBPROFILE&&SBPROFILE.class_id&&classIds.indexOf(SBPROFILE.class_id)<0) classIds.push(SBPROFILE.class_id);
+    if(!classIds.length){ host.innerHTML='<div class="note"><span class="eyebrow">No class linked</span>This teacher account isn\'t linked to a class yet. Create one, or check that a class row exists with teacher_id set to your account.</p>'; ROSTER=[]; return; }
+    const {data:profs,error}=await sb.from('profiles').select('*').in('class_id',classIds);
     if(error) throw error;
     const students=(profs||[]).filter(p=>p.role==='student');
     const ids=students.map(s=>s.id);
@@ -3542,7 +3575,7 @@ async function loadRoster(){
     const byUser={}; prog.forEach(r=>{ (byUser[r.user_id]=byUser[r.user_id]||{})[r.key]=r.value; });
     ROSTER=students.map(s=>({ profile:s, data:byUser[s.id]||{} }));
     renderRoster();
-  }catch(e){ host.innerHTML='<div class="note"><span class="eyebrow">Could not load students</span>'+esc(String(e.message||e))+'</p>'; }
+  }catch(e){ host.innerHTML='<div class="note"><span class="eyebrow">Could not load students</span>'+esc(String(e.message||e))+' — if this mentions a policy or permission, the row-level security fix below is needed.</p>'; }
 }
 function getterFor(rec){ return (k,d)=> (k in rec.data) ? rec.data[k] : d; }
 function renderRoster(){
@@ -4502,7 +4535,7 @@ MATHS.MODELS.push(
 const SUBJECTS = {
   physics: {
     name:'Physics', code:'physics', edx:'Edexcel (1PH0)', aqa:'AQA (8463)',
-    tools:['trigger','miscquiz','explorer','counterfactual','sandbox','misconceptions','contrast','models','analogies','conceptmap','spec','alevel','resources'],
+    tools:['trigger','miscquiz','explorer','counterfactual','sandbox','misconceptions','contrast','models','analogies','conceptmap','spec','alevel','resources','transfer','lens'],
     MIS:[...MIS], ANA:[...ANA], TRIG:[...TRIG], QUIZ:[...QUIZ], EQS:[...EQS], CF:[...CF],
     CONTRAST:[...CONTRAST], MODELS:[...MODELS], NODES:[...NODES], DIAG_TOPICS:[...DIAG_TOPICS],
     SPEC:[...SPEC], AQA_SPEC:[...AQA_SPEC], CPRAC:[...CPRAC], AQA_PRAC:[...AQA_PRAC]
@@ -4971,7 +5004,7 @@ function buildNav(){const acc=currentAccount();
   let subjBar='';
   try{ if(typeof SUBJECTS!=='undefined') subjBar='<div class="subjbar">'+Object.keys(SUBJECTS).map(id=>`<button class="subjbtn ${id===CURSUBJ?'on':''}" onclick="switchSubject('${id}')">${SUBJECTS[id].name}</button>`).join('')+'</div>'; }catch(e){}
   const tools=(typeof CURTOOLS!=='undefined')?CURTOOLS:null;
-  const TOGGLE=new Set(['trigger','miscquiz','explorer','counterfactual','sandbox','misconceptions','contrast','models','analogies','conceptmap','spec','alevel','resources']);
+  const TOGGLE=new Set(['trigger','miscquiz','explorer','counterfactual','sandbox','misconceptions','contrast','models','analogies','conceptmap','spec','alevel','resources','transfer','lens']);
   let items=NAV.filter(x=>!(x.teacherOnly&&(!acc||acc.role!=='teacher'))&&!(x.grp==='Teacher'&&(!acc||acc.role!=='teacher'))&&!(x.id&&tools&&TOGGLE.has(x.id)&&tools.indexOf(x.id)<0));
   items=items.filter((x,i)=>!(x.grp&&(i===items.length-1||items[i+1].grp)));
   document.getElementById('nav').innerHTML=subjBar+bar+items.map(x=>x.grp

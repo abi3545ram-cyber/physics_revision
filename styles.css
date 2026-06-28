@@ -234,6 +234,19 @@ label.fld{font-size:.78rem;font-weight:500;color:var(--ink-soft);display:block;m
 .plan-n{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#1c1300;flex:none;
   display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk';font-weight:700;font-size:.85rem}
 .planrow .arrow{color:var(--ink-faint)}
+/* auto-ticking plan checkboxes */
+.plan-chk{width:24px;height:24px;border-radius:7px;border:2px solid var(--line);background:var(--paper-2);flex:none;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;color:#fff;transition:all .15s}
+.plan-chk.on{background:var(--rest,#3C8C5A);border-color:var(--rest,#3C8C5A)}
+.planrow.done{opacity:.72}
+.planrow.done div>div:first-child{text-decoration:line-through;text-decoration-color:var(--ink-faint)}
+.plan-status{margin-top:12px;padding:10px 12px;border-radius:9px;background:var(--paper-2);border:1px dashed var(--line);
+  font-size:.86rem;color:var(--ink-soft)}
+.plan-status.done{background:linear-gradient(90deg,rgba(60,140,90,.12),transparent 70%);border:1px solid rgba(60,140,90,.4);color:var(--ink)}
+/* base tag pill (white text) — previously only .acc>button .tag set the colour,
+   so bare tags rendered dark-on-blue and were hard to read */
+.tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.66rem;padding:2px 8px;border-radius:20px;
+  color:#fff;letter-spacing:.03em;white-space:nowrap}
 .report p{margin:0 0 12px;line-height:1.6}.report p:last-of-type{margin-bottom:0}
 
 /* contrast table */
