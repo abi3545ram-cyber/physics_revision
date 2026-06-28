@@ -327,3 +327,9 @@ label.fld{font-size:.78rem;font-weight:500;color:var(--ink-soft);display:block;m
 /* ===== v8 login overlay ===== */
 #login{display:none;position:fixed;inset:0;z-index:400;background:rgba(16,20,34,.72);backdrop-filter:blur(5px);align-items:center;justify-content:center;padding:20px}
 #login .winput{margin-top:2px}
+
+/* ===== v9 subject switcher ===== */
+.subjbar{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 12px}
+.subjbtn{flex:1 1 auto;min-width:60px;border:1px solid var(--line-soft);background:var(--paper-2);color:var(--ink-soft);border-radius:8px;padding:6px 8px;font:inherit;font-size:.76rem;cursor:pointer;transition:all .12s;white-space:nowrap}
+.subjbtn:hover{border-color:var(--ink-faint)}
+.subjbtn.on{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}

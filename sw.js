@@ -1,4 +1,4 @@
-const CACHE = 'relearning-physics-v2';
+const CACHE = 'relearning-physics-v5';
 const CDN = [
   'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap'
 ];
